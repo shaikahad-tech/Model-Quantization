@@ -1,0 +1,42 @@
+                                trainer data doctor                                
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check              ┃ Verdict ┃ Message               ┃ Evidence              ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ chat_template      │ OK      │ tokenizer has a       │ 2507 chars            │
+│                    │         │ chat_template         │                       │
+│ template_render    │ OK      │ 0/200 rows failed to  │                       │
+│                    │         │ render through the    │                       │
+│                    │         │ chat template         │                       │
+│ generation_markers │ MINOR   │ template lacks {%     │                       │
+│                    │         │ generation %} markers │                       │
+│                    │         │ — assistant-only      │                       │
+│                    │         │ masking falls back to │                       │
+│                    │         │ a heuristic that may  │                       │
+│                    │         │ include role-prefix   │                       │
+│                    │         │ tokens in the loss    │                       │
+│ eos_in_labels      │ OK      │ 0/200 rows (0.0%)     │ eos_token_id=[151645] │
+│                    │         │ never train an        │                       │
+│                    │         │ EOS/EOT token — the   │                       │
+│                    │         │ model will not learn  │                       │
+│                    │         │ to stop generating    │                       │
+│ bos_duplication    │ OK      │ tokenizer has no      │                       │
+│                    │         │ bos_token_id          │                       │
+│ system_role        │ OK      │ no rows use a system  │                       │
+│                    │         │ message               │                       │
+│ unknown_roles      │ OK      │ 0/200 rows (0.0%)     │                       │
+│                    │         │ contain a message     │                       │
+│                    │         │ role outside          │                       │
+│                    │         │ ['assistant',         │                       │
+│                    │         │ 'function', 'system', │                       │
+│                    │         │ 'tool', 'user']       │                       │
+│ truncation_risk    │ OK      │ p95 length = 425      │ p50=130, max=467      │
+│                    │         │ tokens vs             │                       │
+│                    │         │ max_length=512; 0/200 │                       │
+│                    │         │ rows (0.0%) would be  │                       │
+│                    │         │ truncated             │                       │
+└────────────────────┴─────────┴───────────────────────┴───────────────────────┘
+╭─────────── overall ───────────╮
+│ MINOR — 200/1400 rows scanned │
+╰───────────────────────────────╯
+Wrote data-doctor-v2.json
+[transformers] return_assistant_tokens_mask==True but chat template does not contain `{% generation %}` keyword.

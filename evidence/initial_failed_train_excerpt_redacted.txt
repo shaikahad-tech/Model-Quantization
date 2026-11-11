@@ -1,0 +1,131 @@
+2026-11-11T00:37:56.167229+00:00 trainer doctor --config trainer.yaml exit 0 tional │   0.141.1    │ >=0.104.0   │ OK                    │
+│ uvicorn      │ optional │    0.54.0    │ >=0.24.0    │ OK                    │
+│ datasketch   │ optional │      -       │ >=1.6.0     │ not installed         │
+│ lm-eval      │ optional │      -       │ >=0.4.0     │ not installed         │
+│ wandb        │ optional │    0.28.1    │ >=0.15.0    │ OK                    │
+│ deepspeed    │ optional │      -       │ >=0.12.0    │ not installed         │
+│ httpx        │ optional │    0.28.1    │ >=0.24.0    │ OK                    │
+│ unsloth      │ optional │      -       │ >=2024.8    │ not installed         │
+│ Pillow       │ optional │    11.3.0    │ >=9.0.0     │ OK                    │
+│ torchao      │ optional │    0.10.0    │ >=0.18.0    │ outdated (need        │
+│              │          │              │             │ >=0.18.0)             │
+│ sglang       │ optional │      -       │ >=0.5.1     │ not installed         │
+│ librosa      │ optional │    0.11.0    │ >=0.10.0    │ OK                    │
+│ torch        │ [train]  │ 2.14.1+cu130 │ >=2.6.0     │ OK                    │
+│ transformers │ [train]  │    5.22.1    │ >=5.16.1    │ OK                    │
+│ peft         │ [train]  │    0.21.2    │ >=0.20.0    │ OK                    │
+│ trl          │ [train]  │    0.29.1    │ >=0.29.0    │ OK                    │
+│ datasets     │ [train]  │    4.8.5     │ >=2.14.0    │ OK                    │
+│ bitsandbytes │ [train]  │    0.50.2    │ >=0.41.0    │ OK                    │
+│ accelerate   │ [train]  │    1.15.0    │ >=0.27.0    │ OK                    │
+└──────────────┴──────────┴──────────────┴─────────────┴───────────────────────┘
+
+Found 1 issue(s):
+  > Upgrade torchao: pip install "torchao>=0.18.0"
+
+Fix all:
+  pip install "torchao>=0.18.0"
+
+Config check - task=sft backend=transformers
+  None of the 0 setting(s) known to be unread on task=sft backend=transformers 
+is switched on in this config.
+
+GitHub: https://github.com/MakazhanAlpamys/Trainer
+ 
+2026-11-11T00:37:57.826435+00:00 trainer plan --config trainer.yaml exit 0 Reading the model's config.json from the Hub to size the run (HF_HUB_OFFLINE=1 
+skips this)...
+                     Training plan                      
+┏━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Field                   ┃ Value                      ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ base                    │ Qwen/Qwen2.5-1.5B-Instruct │
+│ task                    │ sft                        │
+│ config_sha              │ e70a81edf7486a5b...        │
+│ dataset_sha             │ 0e148de110780f7a...        │
+│ estimated_cost          │ $0.1000                    │
+│ estimated_minutes       │ 20.0                       │
+│ peak_vram_gb            │ 5.8                        │
+│ spot_price_usd_per_hour │ $0.30                      │
+└─────────────────────────┴────────────────────────────┘
+╭──────────────────────────────────── plan ────────────────────────────────────╮
+│ Plan written to trainer.tfstate.                                                │
+│ Review the numbers, then run `trainer apply` to record the plan.                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+2026-11-11T00:37:58.840437+00:00 Loading config from trainer.yaml...
+2026-11-11T00:38:01.166987+00:00 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-11-11T00:38:01.518031+00:00 ╭─────────────────────────────── Training Setup ───────────────────────────────╮
+2026-11-11T00:38:01.518164+00:00 │ Device:  Tesla T4                                                            │
+2026-11-11T00:38:01.518191+00:00 │ Memory:  14.6 GB                                                             │
+2026-11-11T00:38:01.518209+00:00 │ Model:   Qwen/Qwen2.5-1.5B-Instruct                                          │
+2026-11-11T00:38:01.518225+00:00 │ Task:    sft                                                                 │
+2026-11-11T00:38:01.518239+00:00 │ Backend: transformers                                                        │
+2026-11-11T00:38:01.518253+00:00 │ LoRA:    r=16, alpha=32                                                      │
+2026-11-11T00:38:01.518266+00:00 │ Quant:   4bit                                                                │
+2026-11-11T00:38:01.518281+00:00 │ Seed:    42 (unset default)                                                  │
+2026-11-11T00:38:01.518294+00:00 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-11-11T00:38:01.522685+00:00 Loading dataset...
+2026-11-11T00:38:01.535422+00:00 Loaded: 1260 train samples
+2026-11-11T00:38:01.583165+00:00 Run ID: run_20261111_003801_059534f0
+2026-11-11T00:38:01.583859+00:00 Setting up model + trainer...
+2026-11-11T00:38:12.438929+00:00 Loading tokenizer: Qwen/Qwen2.5-1.5B-Instruct
+2026-11-11T00:38:13.252116+00:00 Loading model: Qwen/Qwen2.5-1.5B-Instruct
+2026-11-11T00:38:45.536280+00:00 
+2026-11-11T00:38:47.744850+00:00 Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]
+2026-11-11T00:38:48.008860+00:00 Loading weights:   0%|          | 1/338 [00:02<12:23,  2.21s/it]
+2026-11-11T00:38:48.138803+00:00 Loading weights:   1%|          | 3/338 [00:02<03:44,  1.49it/s]
+2026-11-11T00:38:48.258970+00:00 Loading weights:   1%|          | 4/338 [00:02<02:41,  2.07it/s]
+2026-11-11T00:38:48.429310+00:00 Loading weights:   1%|▏         | 5/338 [00:02<02:00,  2.75it/s]
+2026-11-11T00:38:48.719710+00:00 Loading weights:   4%|▍         | 15/338 [00:02<00:25, 12.90it/s]
+2026-11-11T00:38:48.831506+00:00 Loading weights:   5%|▌         | 18/338 [00:03<00:26, 12.11it/s]
+2026-11-11T00:38:48.950641+00:00 Loading weights:   8%|▊         | 28/338 [00:03<00:13, 23.27it/s]
+2026-11-11T00:38:49.059736+00:00 Loading weights:  12%|█▏        | 40/338 [00:03<00:08, 37.21it/s]
+2026-11-11T00:38:49.171993+00:00 Loading weights:  15%|█▌        | 52/338 [00:03<00:05, 51.08it/s]
+2026-11-11T00:38:49.276810+00:00 Loading weights:  19%|█▉        | 64/338 [00:03<00:04, 63.54it/s]
+2026-11-11T00:38:49.386466+00:00 Loading weights:  22%|██▏       | 76/338 [00:03<00:03, 74.77it/s]
+2026-11-11T00:38:49.494517+00:00 Loading weights:  26%|██▌       | 88/338 [00:03<00:02, 83.52it/s]
+2026-11-11T00:38:49.615585+00:00 Loading weights:  30%|██▉       | 100/338 [00:03<00:02, 90.73it/s]
+2026-11-11T00:38:49.780730+00:00 Loading weights:  33%|███▎      | 112/338 [00:04<00:02, 93.21it/s]
+2026-11-11T00:38:50.089992+00:00 Loading weights:  36%|███▋      | 123/338 [00:04<00:02, 83.50it/s]
+2026-11-11T00:38:50.469416+00:00 Loading weights:  39%|███▉      | 133/338 [00:04<00:03, 58.28it/s]
+2026-11-11T00:38:50.580861+00:00 Loading weights:  42%|████▏     | 141/338 [00:04<00:04, 40.96it/s]
+2026-11-11T00:38:50.813020+00:00 Loading weights:  43%|████▎     | 147/338 [00:05<00:04, 43.06it/s]
+2026-11-11T00:38:50.934870+00:00 Loading weights:  45%|████▌     | 153/338 [00:05<00:04, 37.45it/s]
+2026-11-11T00:38:51.147647+00:00 Loading weights:  47%|████▋     | 159/338 [00:05<00:04, 39.75it/s]
+2026-11-11T00:38:51.284686+00:00 Loading weights:  49%|████▊     | 164/338 [00:05<00:05, 34.40it/s]
+2026-11-11T00:38:51.489702+00:00 Loading weights:  51%|█████     | 171/338 [00:05<00:04, 38.28it/s]
+2026-11-11T00:38:51.640396+00:00 Loading weights:  52%|█████▏    | 176/338 [00:05<00:04, 33.67it/s]
+2026-11-11T00:38:51.863350+00:00 Loading weights:  54%|█████▍    | 183/338 [00:06<00:04, 36.97it/s]
+2026-11-11T00:38:52.014766+00:00 Loading weights:  56%|█████▌    | 188/338 [00:06<00:04, 31.83it/s]
+2026-11-11T00:38:52.231664+00:00 Loading weights:  58%|█████▊    | 195/338 [00:06<00:04, 35.51it/s]
+2026-11-11T00:38:52.384356+00:00 Loading weights:  59%|█████▉    | 199/338 [00:06<00:04, 29.65it/s]
+2026-11-11T00:38:52.601951+00:00 Loading weights:  61%|██████    | 207/338 [00:06<00:03, 35.49it/s]
+2026-11-11T00:38:52.754434+00:00 Loading weights:  62%|██████▏   | 211/338 [00:07<00:04, 29.62it/s]
+2026-11-11T00:38:52.984220+00:00 Loading weights:  65%|██████▍   | 219/338 [00:07<00:03, 35.46it/s]
+2026-11-11T00:38:53.128522+00:00 Loading weights:  66%|██████▌   | 223/338 [00:07<00:03, 29.08it/s]
+2026-11-11T00:38:53.346872+00:00 Loading weights:  68%|██████▊   | 231/338 [00:07<00:03, 35.41it/s]
+2026-11-11T00:38:53.463906+00:00 Loading weights:  70%|██████▉   | 235/338 [00:07<00:03, 29.55it/s]
+2026-11-11T00:38:53.579346+00:00 Loading weights:  72%|███████▏  | 245/338 [00:07<00:02, 41.18it/s]
+2026-11-11T00:38:53.682656+00:00 Loading weights:  79%|███████▉  | 267/338 [00:08<00:00, 75.04it/s]
+2026-11-11T00:38:53.784005+00:00 Loading weights:  83%|████████▎ | 280/338 [00:08<00:00, 86.45it/s]
+2026-11-11T00:38:53.898606+00:00 Loading weights:  87%|████████▋ | 293/338 [00:08<00:00, 96.63it/s]
+2026-11-11T00:38:54.029598+00:00 Loading weights:  93%|█████████▎| 315/338 [00:08<00:00, 123.04it/s]
+2026-11-11T00:38:54.043703+00:00 Loading weights:  97%|█████████▋| 329/338 [00:08<00:00, 117.99it/s]
+2026-11-11T00:38:54.043784+00:00 Loading weights: 100%|██████████| 338/338 [00:08<00:00, 39.73it/s] 
+2026-11-11T00:38:54.424382+00:00 LoRA applied: 2,179,072 trainable / 1,545,893,376 total (0.14%)
+2026-11-11T00:38:56.605203+00:00 
+2026-11-11T00:38:56.608147+00:00 Map:   0%|          | 0/1260 [00:00<?, ? examples/s][transformers] return_assistant_tokens_mask==True but chat template does not contain `{% generation %}` keyword.
+2026-11-11T00:38:56.642318+00:00 
+2026-11-11T00:38:56.642358+00:00 Map:   0%|          | 3/1260 [00:00<00:15, 81.78 examples/s]
+2026-11-11T00:38:56.764912+00:00 
+2026-11-11T00:38:56.764981+00:00 Error: ValueError: train row 4: no causal-loss target remains after 
+2026-11-11T00:38:56.765002+00:00 tokenization/truncation at data.max_length=512; the assistant response is absent
+2026-11-11T00:38:56.765018+00:00 or fully truncated. Increase data.max_length or shorten the prompt.
+2026-11-11T00:38:56.765358+00:00 Run with --verbose for the full traceback.
+TRAIN EXIT 1 at 2026-11-11T00:38:58.434814+00:00
+[0;31m---------------------------------------------------------------------------[0m[0;31mAssertionError[0m                            Traceback (most recent call last)[0;32m/tmp/ipykernel_777/1976617783.py[0m in [0;36m<cell line: 0>[0;34m()[0m
+[1;32m     23[0m     [0mstop[0m[0;34m.[0m[0mset[0m[0;34m([0m[0;34m)[0m[0;34m;[0m [0mt[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m     24[0m [0mprint[0m[0;34m([0m[0;34m'TRAIN EXIT'[0m[0;34m,[0m [0mrc[0m[0;34m,[0m [0;34m'at'[0m[0;34m,[0m [0mstamp[0m[0;34m([0m[0;34m)[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0;32m---> 25[0;31m [0;32massert[0m [0mrc[0m [0;34m==[0m [0;36m0[0m[0;34m[0m[0;34m[0m[0m
+[0m[0;31mAssertionError[0m: 

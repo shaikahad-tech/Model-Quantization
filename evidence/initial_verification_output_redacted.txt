@@ -1,0 +1,95 @@
+VERIFY_EXIT 0 2026-11-11T01:09:16.581163+00:00
+7%|███████▋  | 259/338 [00:09<00:02, 31.73it/s]
+Loading weights:  79%|███████▊  | 266/338 [00:10<00:02, 35.47it/s]
+Loading weights:  80%|███████▉  | 270/338 [00:10<00:02, 29.41it/s]
+Loading weights:  83%|████████▎ | 279/338 [00:10<00:01, 36.93it/s]
+Loading weights:  84%|████████▎ | 283/338 [00:10<00:01, 30.38it/s]
+Loading weights:  86%|████████▌ | 291/338 [00:10<00:01, 30.48it/s]
+Loading weights:  87%|████████▋ | 295/338 [00:11<00:01, 31.52it/s]
+Loading weights:  90%|████████▉ | 303/338 [00:11<00:00, 37.11it/s]
+Loading weights:  91%|█████████ | 307/338 [00:11<00:01, 30.53it/s]
+Loading weights:  93%|█████████▎| 315/338 [00:11<00:00, 36.17it/s]
+Loading weights:  94%|█████████▍| 319/338 [00:11<00:00, 29.80it/s]
+Loading weights:  97%|█████████▋| 327/338 [00:11<00:00, 35.76it/s]
+Loading weights:  98%|█████████▊| 331/338 [00:12<00:00, 29.62it/s]
+Loading weights: 100%|██████████| 338/338 [00:12<00:00, 27.71it/s]
+merged {"heldout_nll_per_target_token": 2.351804429383977, "target_tokens": 457, "answers": ["A bicycle helmet protects the head from injury in case of an accident. It can also prevent serious injuries such as concussions and skull fractures.", "1. Wet your hands with clean running water.\n2. Apply soap and lather up the entire surface of both hands.\n3. Scrub all surfaces of both hands including between fingers and under nails."]}
+
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/338 [00:01<07:29,  1.33s/it]
+Loading weights:   3%|▎         | 11/338 [00:01<00:33,  9.84it/s]
+Loading weights:   8%|▊         | 27/338 [00:01<00:11, 26.09it/s]
+Loading weights:  10%|█         | 35/338 [00:01<00:09, 32.52it/s]
+Loading weights:  14%|█▍        | 49/338 [00:01<00:05, 49.69it/s]
+Loading weights:  19%|█▉        | 64/338 [00:01<00:04, 66.61it/s]
+Loading weights:  26%|██▌       | 87/338 [00:02<00:02, 97.47it/s]
+Loading weights:  30%|██▉       | 101/338 [00:02<00:02, 102.55it/s]
+Loading weights:  35%|███▍      | 117/338 [00:02<00:01, 113.53it/s]
+Loading weights:  39%|███▉      | 133/338 [00:02<00:01, 119.58it/s]
+Loading weights:  43%|████▎     | 147/338 [00:02<00:01, 117.37it/s]
+Loading weights:  47%|████▋     | 160/338 [00:02<00:01, 113.83it/s]
+Loading weights:  52%|█████▏    | 176/338 [00:02<00:01, 123.95it/s]
+Loading weights:  57%|█████▋    | 193/338 [00:02<00:01, 127.93it/s]
+Loading weights:  61%|██████    | 207/338 [00:03<00:01, 114.83it/s]
+Loading weights:  66%|██████▋   | 224/338 [00:03<00:00, 128.02it/s]
+Loading weights:  70%|███████   | 238/338 [00:03<00:00, 130.33it/s]
+Loading weights:  75%|███████▍  | 252/338 [00:03<00:00, 126.44it/s]
+Loading weights:  79%|███████▉  | 267/338 [00:03<00:00, 124.40it/s]
+Loading weights:  83%|████████▎ | 280/338 [00:03<00:00, 118.52it/s]
+Loading weights:  88%|████████▊ | 296/338 [00:03<00:00, 128.41it/s]
+Loading weights:  92%|█████████▏| 310/338 [00:03<00:00, 131.20it/s]
+Loading weights:  96%|█████████▌| 324/338 [00:03<00:00, 125.95it/s]
+Loading weights: 100%|██████████| 338/338 [00:04<00:00, 84.03it/s] 
+4bit {"heldout_nll_per_target_token": 2.3785898633284956, "target_tokens": 457, "answers": ["A bicycle helmet protects your head from injury in the event of an accident. It can also protect you from serious injuries if you fall off your bike and hit your head on the ground.", "1. Wet your hands with clean running water.\n2. Apply soap and lather up the entire surface of your hands.\n3. Rub your hands together to make sure all surfaces are covered."]}
+{
+  "base_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "relative_q_proj_delta": 0.006275384686887264,
+  "adapter_B_nonzero": 56,
+  "adapter_B_count": 56,
+  "merged_has_adapter_file": false,
+  "quantization_config": {
+    "_load_in_4bit": true,
+    "_load_in_8bit": false,
+    "bnb_4bit_compute_dtype": "float16",
+    "bnb_4bit_quant_storage": "uint8",
+    "bnb_4bit_quant_type": "nf4",
+    "bnb_4bit_use_double_quant": true,
+    "llm_int8_enable_fp32_cpu_offload": false,
+    "llm_int8_has_fp16_weight": false,
+    "llm_int8_skip_modules": null,
+    "llm_int8_threshold": 6.0,
+    "load_in_4bit": true,
+    "load_in_8bit": false,
+    "quant_method": "bitsandbytes"
+  },
+  "artifacts": {
+    "base": {
+      "heldout_nll_per_target_token": 2.5134674371332255,
+      "target_tokens": 457,
+      "answers": [
+        "A bicycle helmet is useful for several reasons:\n\n1. Protection: A properly fitted bicycle helmet can provide significant protection to the head in case of an accident or fall.\n\n2. Prevention of Concussions: The soft foam lining and padded shell of a helmet help absorb impact forces during a crash, reducing the risk of concussions",
+        "1. Wet your hands with clean running water and apply soap.\n2. Lather up your hands by rubbing them together vigorously for at least 20 seconds.\n3. Rinse off all the soap under clean running water until it runs clear."
+      ]
+    },
+    "merged": {
+      "heldout_nll_per_target_token": 2.351804429383977,
+      "target_tokens": 457,
+      "answers": [
+        "A bicycle helmet protects the head from injury in case of an accident. It can also prevent serious injuries such as concussions and skull fractures.",
+        "1. Wet your hands with clean running water.\n2. Apply soap and lather up the entire surface of both hands.\n3. Scrub all surfaces of both hands including between fingers and under nails."
+      ]
+    },
+    "4bit": {
+      "heldout_nll_per_target_token": 2.3785898633284956,
+      "target_tokens": 457,
+      "answers": [
+        "A bicycle helmet protects your head from injury in the event of an accident. It can also protect you from serious injuries if you fall off your bike and hit your head on the ground.",
+        "1. Wet your hands with clean running water.\n2. Apply soap and lather up the entire surface of your hands.\n3. Rub your hands together to make sure all surfaces are covered."
+      ]
+    }
+  },
+  "structural_pass": true,
+  "quantized_close_nll": true
+}
+2026-11-11T01:09:16.580812+00:00 exit 0
+

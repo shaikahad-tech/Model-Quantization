@@ -1,0 +1,50 @@
+{
+  "base_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "relative_q_proj_delta": 0.0062767863273620605,
+  "adapter_B_nonzero": 56,
+  "adapter_B_count": 56,
+  "merged_has_adapter_file": false,
+  "quantization_config": {
+    "_load_in_4bit": true,
+    "_load_in_8bit": false,
+    "bnb_4bit_compute_dtype": "float16",
+    "bnb_4bit_quant_storage": "uint8",
+    "bnb_4bit_quant_type": "nf4",
+    "bnb_4bit_use_double_quant": true,
+    "llm_int8_enable_fp32_cpu_offload": false,
+    "llm_int8_has_fp16_weight": false,
+    "llm_int8_skip_modules": null,
+    "llm_int8_threshold": 6.0,
+    "load_in_4bit": true,
+    "load_in_8bit": false,
+    "quant_method": "bitsandbytes"
+  },
+  "artifacts": {
+    "base": {
+      "heldout_nll_per_target_token": 2.5134674371332255,
+      "target_tokens": 457,
+      "answers": [
+        "A bicycle helmet is useful for several reasons:\n\n1. Protection: A properly fitted bicycle helmet can provide significant protection to the head in case of an accident or fall.\n\n2. Prevention of Concussions: The soft foam lining and padded shell of a helmet help absorb impact forces during a crash, reducing the risk of concussions",
+        "1. Wet your hands with clean running water and apply soap.\n2. Lather up your hands by rubbing them together vigorously for at least 20 seconds.\n3. Rinse off all the soap under clean running water until it runs clear."
+      ]
+    },
+    "merged": {
+      "heldout_nll_per_target_token": 2.352026392646639,
+      "target_tokens": 457,
+      "answers": [
+        "A bicycle helmet protects the head from injury in case of an accident. It can also prevent serious injuries such as concussions and skull fractures.",
+        "1. Wet your hands with clean running water.\n2. Apply soap and lather up the entire surface of both hands.\n3. Scrub all surfaces of both hands including between fingers and under nails."
+      ]
+    },
+    "4bit": {
+      "heldout_nll_per_target_token": 2.378492740885695,
+      "target_tokens": 457,
+      "answers": [
+        "A bicycle helmet protects your head from injury in the event of an accident. It can also protect you from serious injuries if you fall off your bike and hit your head.",
+        "1. Wet your hands with clean running water.\n2. Apply soap and lather up the entire surface of your hands.\n3. Rub your hands together to create a soapy lather. \n4. Rinse off all the soap from your hands under clean running water.\n5. Dry your hands using a paper"
+      ]
+    }
+  },
+  "structural_pass": true,
+  "quantized_close_nll": true
+}

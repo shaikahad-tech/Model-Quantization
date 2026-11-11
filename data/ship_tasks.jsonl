@@ -1,0 +1,6 @@
+{"prompt": "What is 2 + 2?", "expected": "4", "scoring": "contains"}
+{"prompt": "What protects your head when cycling?", "expected": "helmet", "scoring": "contains"}
+{"prompt": "Name the planet we live on.", "expected": "Earth", "scoring": "contains"}
+{"prompt": "How many days are in a week?", "expected": "7", "scoring": "contains"}
+{"prompt": "What should you do before eating to clean your hands?", "expected": "wash", "scoring": "contains"}
+{"prompt": "What is frozen water called?", "expected": "ice", "scoring": "contains"}
