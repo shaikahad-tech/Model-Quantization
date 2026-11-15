@@ -1,0 +1,11 @@
+# Bootstrap only. Capture exact resolved versions on Colab; do not call this a lock.
+-r requirements-rerun.txt
+tokenizers
+numpy
+psutil
+scipy
+jsonschema
+lm-eval
+jinja2
+reportlab
+pypdf

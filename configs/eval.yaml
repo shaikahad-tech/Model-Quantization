@@ -1,0 +1,24 @@
+{
+  "max_new_tokens": 256,
+  "variants": [
+    "base_fp16",
+    "base_nf4",
+    "fp16_adapter",
+    "nf4_adapter",
+    "merged_fp16",
+    "merged_nf4",
+    "shuffled_label_adapter",
+    "noop",
+    "randomized_B"
+  ],
+  "suites": [
+    "primary",
+    "safety_harmful",
+    "safety_benign",
+    "mmlu",
+    "arc_easy",
+    "hellaswag",
+    "primary_adjacent"
+  ],
+  "bootstrap_seed": 20261111
+}

@@ -1,20 +1,17 @@
-# Exact release-gate scope
+# Historical gate: exact scope and limits
 
-Historical notebook cell 20 records this command, with the public CLI alias (`trainer` is a redaction, not an executable supplied here):
+The redacted notebook command is `trainer ship --base Qwen/Qwen2.5-1.5B-Instruct --adapter output --task-eval ship_tasks.jsonl --output ship_verdict.json --device cuda`. The alias is not executable software in this repository. The retry log spans 08:52:57–09:07:39 UTC on 11 November, exit 2. Its banner and JSON specify bfloat16; the saved gate evaluated an active adapter, not the merged or NF4 export. The banner also offered `--config` to reuse training quantization. That option was not used.
 
-```sh
-trainer ship --base Qwen/Qwen2.5-1.5B-Instruct --adapter output --task-eval ship_tasks.jsonl --output ship_verdict.json --device cuda
-```
+The base was already 6/6 on contains-match tasks. A strict improvement above 1.0 is impossible, so `task_win` could not pass with those inputs. That is a defect in task selection, not proof every possible tuned model fails to learn.
 
-The retry [log](../evidence/ship_log_redacted.txt) starts 2026-11-11 08:52:57 UTC and ends 09:07:39 UTC, exit 2. Its banner says full precision bfloat16. The [verdict](../evidence/ship_verdict_redacted.json) agrees: `numerics=bfloat16`, `failed_rule=task_win`, `noise_floor=null`.
+The mini-suite denominators are unknown. Forty is the smallest common denominator consistent with the displayed fractions; larger denominators are also possible. **Conditionally assuming n=40**, safety corresponds to 40/40→18/40. Wilson 95% intervals are approximately [0.912,1.000] and [0.307,0.602]. The common-sense and tool-call differences are only three cases each; they are inconclusive at that assumed size. Overlapping/nonoverlapping Wilson intervals are descriptive, not a substitute for saved paired cases. These inferred counts are not recorded observations, and no unconditional significance claim follows.
 
-| Item | Evidence-supported conclusion |
+| Old gate could show | Old gate could not establish |
 |---|---|
-| Tuned input | Base + active adapter `output`; neither `merged` nor `quantized` |
-| Tasks | [Six contains-match prompts](../data/ship_tasks.jsonl); 6/6 each; no strict win |
-| General checks | Arithmetic, common sense, JSON format, instruction, MMLU, over-refusal, safety, tool calling; eight aggregate scores saved |
-| Regressions | Common sense −0.075, safety −0.55, tool calling −0.075; threshold 0.05 |
-| Unknown | Mini-suite case denominators, per-case generations, actual module census, repeated-run uncertainty |
-| Not run | Gate on merged export, gate on saved NF4, four-artifact per-case safety comparison |
+| Six task scores tied and aggregate mini scores changed under bf16 adapter inference | Task improvement on a non-saturated representative test |
+| Safety point estimate dropped 1.00→0.45 | Why particular safety cases failed or whether labels were reliable |
+| Common-sense/tool-call point estimates fell | Their significance without denominators and paired outcomes |
+| The adapter-input gate rejected task_win | Safety or quality of the saved NF4 artifact |
+| The CLI advertised a training-quantization config option | Native T4 bf16 support or actual module/dtype behavior |
 
-The gate completed for its adapter input. It was **not a partial merged-model gate**; describing it that way would introduce another error. Its scores cannot be attributed to the saved NF4 artifact. A separate `python -u verify_artifacts.py` smoke test loaded three artifacts and evaluated eight rows / 457 targets each. No 100-row result exists.
+Sources: [log](../evidence/ship_log_redacted.txt), [verdict](../evidence/ship_verdict_redacted.json), [six tasks](../data/ship_tasks.jsonl). The [new gate](gate_v2.md) binds results to saved artifacts and keeps missing evidence negative.

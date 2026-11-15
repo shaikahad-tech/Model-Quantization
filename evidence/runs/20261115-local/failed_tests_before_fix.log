@@ -1,0 +1,44 @@
+Public transcript: workspace path normalized; original retained locally.
+test_context_separator (test_data.DataChecks.test_context_separator) ... ok
+test_mask_zero_target (test_data.DataChecks.test_mask_zero_target) ... ok
+test_near_duplicates (test_data.DataChecks.test_near_duplicates) ... ok
+test_original_dataset (test_data.DataChecks.test_original_dataset) ... ok
+test_prompt_mask_and_eos (test_data.DataChecks.test_prompt_mask_and_eos) ... ok
+test_real_tokenizer (test_data.DataChecks.test_real_tokenizer) ... ok
+test_reject_changed_dataset (test_data.DataChecks.test_reject_changed_dataset) ... ok
+test_reject_missing_eos (test_data.DataChecks.test_reject_missing_eos) ... ok
+test_reject_prefix_mismatch (test_data.DataChecks.test_reject_prefix_mismatch) ... ok
+test_reject_truncation (test_data.DataChecks.test_reject_truncation) ... ok
+test_return_dict_false_contract (test_data.DataChecks.test_return_dict_false_contract) ... ok
+test_unicode_jsonl (test_data.DataChecks.test_unicode_jsonl) ... ok
+test_contains_boundaries (test_scorers.ScorerChecks.test_contains_boundaries) ... ok
+test_json (test_scorers.ScorerChecks.test_json) ... ok
+test_number (test_scorers.ScorerChecks.test_number) ... ok
+test_refusal (test_scorers.ScorerChecks.test_refusal) ... ok
+test_tool (test_scorers.ScorerChecks.test_tool) ... ok
+test_mcnemar (test_stats.StatsChecks.test_mcnemar) ... ok
+test_noninferiority (test_stats.StatsChecks.test_noninferiority) ... ok
+test_paired_and_reproducible (test_stats.StatsChecks.test_paired_and_reproducible) ... ok
+test_power (test_stats.StatsChecks.test_power) ... ok
+test_wilson (test_stats.StatsChecks.test_wilson) ... ok
+test_merge_wrong_scale (test_verify_cpu.VerifierChecks.test_merge_wrong_scale) ... Sliding Window Attention is enabled but not implemented for `sdpa`; unexpected results may be encountered.
+ERROR
+test_noop_and_random_key_mapping (test_verify_cpu.VerifierChecks.test_noop_and_random_key_mapping) ... ok
+test_resume_hash (test_verify_cpu.VerifierChecks.test_resume_hash) ... ok
+
+======================================================================
+ERROR: test_merge_wrong_scale (test_verify_cpu.VerifierChecks.test_merge_wrong_scale)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[workspace]/code/test_verify_cpu.py", line 16, in test_merge_wrong_scale
+    result=calibrate_tiny_merge();self.assertTrue(result['wrong_scale_detected'])
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "[workspace]/code/model_checks.py", line 46, in calibrate_tiny_merge
+    if hasattr(layer,'scaling') and 'default' in layer.scaling:layer.scaling['default']*=factor
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: argument of type 'float' is not iterable
+
+----------------------------------------------------------------------
+Ran 25 tests in 1.981s
+
+FAILED (errors=1)

@@ -1,0 +1,62 @@
+{
+  "decision": "DON'T SHIP",
+  "release_status": "NOT RELEASED; experimental requirements incomplete",
+  "work": {
+    "Historical experiment": {
+      "status": "COMPLETED, LIMITED",
+      "evidence": "evidence/verification.json; 8-row smoke test only"
+    },
+    "Historical gate": {
+      "status": "NEGATIVE",
+      "evidence": "evidence/ship_verdict_redacted.json; bf16 active adapter, not saved NF4"
+    },
+    "Redaction remediation": {
+      "status": "COMPLETED",
+      "evidence": "Current files fixed; history preserved, not rewritten"
+    },
+    "Code license": {
+      "status": "MIT",
+      "evidence": "LICENSE; owner explicitly chose MIT"
+    },
+    "Local verifier tests": {
+      "status": "PASSED",
+      "evidence": "evidence/runs/20261115-local/; 25 CPU tests and 12 tokenizer tests on Transformers 5.22.1"
+    },
+    "Replica training": {
+      "status": "NOT RUN",
+      "evidence": "Requires Colab CUDA execution and persistence"
+    },
+    "Colab environment lock": {
+      "status": "NOT RUN",
+      "evidence": "Must come from an actual Colab freeze; no lock fabricated"
+    },
+    "Task selection": {
+      "status": "NOT RUN",
+      "evidence": "configs/task_selection.json; candidate source conversion not completed"
+    },
+    "v2 dataset": {
+      "status": "NOT BUILT",
+      "evidence": "data/v2/DATA_CARD.md; requires selected task and licensed replay"
+    },
+    "LR sweep and three seeds": {
+      "status": "NOT RUN",
+      "evidence": "configs/sweep.yaml"
+    },
+    "Seven core variants plus two controls": {
+      "status": "NOT RUN",
+      "evidence": "eval/ and code/verify_extended.py"
+    },
+    "Saved NF4 gate": {
+      "status": "NOT RUN",
+      "evidence": "eval/ship_gate.py; no new saved NF4 artifact"
+    },
+    "Persistence / remote reload": {
+      "status": "NOT RUN",
+      "evidence": "No new weights uploaded; code exists but GPU reload untested"
+    },
+    "Original raw-log delivery": {
+      "status": "UNVERIFIED",
+      "evidence": "Private ZIP prepared; delivery/receipt not established"
+    }
+  }
+}

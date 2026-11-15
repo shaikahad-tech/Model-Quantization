@@ -1,0 +1,11 @@
+# Captured/tested on the Mac CPU audit environment; NOT a Colab lock.
+reportlab==5.1.0
+pypdf==7.1.0
+numpy==2.4.6
+scipy==1.17.1
+psutil==7.2.2
+jsonschema==4.26.0
+torch==2.6.0
+transformers==4.51.3
+peft==0.15.2
+accelerate==1.6.0

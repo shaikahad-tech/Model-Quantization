@@ -1,33 +1,18 @@
-# Reproduction: historical evidence versus new workflow
+# Reproduction and current limits
 
-The historical redacted notebook is an execution record, not runnable software. Product names cannot be inferred from the public aliases. Its original dependency snapshot is incomplete. The model weights were lost. Reusing the original eight-row script would require recovering `output/`, `merged/` and `quantized/` plus the original environment; do not mistake a new run for recovery of those artifacts.
+Use the Python supplied by Colab; Python 3.11 is not mandatory. The clean entry point is `colab/run_all.ipynb`, or the authenticated official Colab CLI. Configure a mounted `DRIVE_DIR` or private `HF_REPO` before starting. Credentials belong in Colab secrets/environment, never Git.
 
-## New public workflow — GPU execution pending
-
-The replacement uses [Transformers 4.51.3](https://huggingface.co/docs/transformers/v4.51.3/en/main_classes/trainer), [PEFT LoRA](https://huggingface.co/docs/peft/v0.15.0/package_reference/lora) and [bitsandbytes NF4](https://huggingface.co/docs/transformers/v4.51.3/quantization/bitsandbytes). This makes masking, adapter merging and serialized 4-bit reload visible without proprietary command aliases. It is a new implementation, **not a bit-for-bit reproduction** of the original CLI. Different optimizer defaults, explicit train/validation order and masking can change results.
-
-Use Python 3.11 on Linux with an NVIDIA CUDA GPU (T4-class 16 GB), adequate host RAM (~16 GB or more) and ~20 GB free disk. No Mac MPS support is claimed. In a fresh environment at the repository root:
+Bootstrap with `python -m pip install -r code/requirements-colab.in`, then save the actual runtime's `pip freeze` as requirements-lock.txt on persistent storage. A Colab lock has not yet been captured in this repository; do not describe the Mac CPU dependency list as one. Restart the runtime after replacing already-imported libraries.
 
 ```sh
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r code/requirements-rerun.txt
-python -m unittest discover -s code -p 'test_*.py' -v
-bash reproduce.sh
+bash reproduce.sh --dry-run --config configs/train_replica.yaml
+bash reproduce.sh --stage replicate --run-dir runs/replica-20261115 --config configs/train_replica.yaml --resume
 ```
 
-The top-level packages are pinned; this is not a complete transitive lockfile. Actual installed versions are saved in each run. CUDA/driver compatibility and the full pipeline have **not been validated here**. Installation may need adjustment on the selected GPU image; preserve any errors and record changes.
+The replica records a fresh config-derived budget before training; it does not copy the retrospective report. It records environment versions, initial GPU output, compact GPU samples, process-tree RSS, allocator maxima, baseline validation and same-mask response NLL. Checkpoints are saved every 50 steps and copied to persistence. Completed stages are skipped only when marker and output hashes validate. A failed or incomplete export is preserved and rebuilt. Off-VM disconnect recovery still requires a real GPU test.
 
-`reproduce.sh` creates a fresh run directory and refuses overwrite. It downloads the pinned base revision, validates exact data hashes and all 1,500 tokenized rows, trains q/v LoRA (r16/alpha32), saves the adapter, merges into a fresh FP16 base on CPU, quantizes the saved merge to NF4/double-quant, and reloads the saved export for verification. The first 1,260 training-file rows train and the last 140 validate; the 100 heldouts stay separate. Batch 1 requires no padding; prompt labels are −100 and assistant EOS is supervised. Training and evaluation use the same two-newline context formatter.
+Replica tolerances: validation loss 1.330±0.01; historical-format eight-row merged NLL 2.352±0.01, NF4 NLL2.378±0.01; sampled q delta0.00628±5%. Historical validation row IDs and loss masks were lost, so this is not assured bit-for-bit reproduction. A tolerance failure stops progression. The original 100-row draft is byte-preserved at `code/historical/verify_artifacts_100.py`.
 
-Each phase saves UTC capture-time logs, untouched `nvidia-smi` samples and allocator maxima. The memory worksheet is copied/timestamped before training. **Its allowance is inherited from the older run, not newly calibrated; revise it for the new dtype/kernel choices before relying on it.** Host RSS peaks are not instrumented. Buffered child output and GPU polling remain limitations. Preserve the whole directory if a stage fails; partial outputs are not success evidence.
+Later commands support `--stage eval --suite-dir PATH`, `--stage publish` (private persistence/fresh-process reload), and `--stage gate`. Publish/reload must precede the final gate to supply durability evidence. Missing shuffled-label weights or licensed suites are errors, not omitted successful checks. Human refusal labels must be entered by a reviewer using the blank sheet from tools/make_manual_audit.py.
 
-## Extended check — no result yet
-
-[verify_extended.py](../code/verify_extended.py) evaluates 100 heldouts on base, no-op LoRA, randomized-B LoRA, trained active adapter, merged and saved NF4. Randomized B retains trained A and matches each B norm; it is one seeded control, not shuffled-label training. Outputs include per-row answer NLL/token counts, six task generations/contains scores, full fixed-prompt logits, all 56 target-matrix deltas and merge residuals, tokenizer identity, and the expected 196 quantized linear-module names / compute dtypes.
-
-No-op logits must match base at atol/rtol 1e-5. Merge comparison allows FP16 rounding (atol 1e-4, rtol 1e-3); these provisional tolerances need calibration against true no-op/wrong-scale artifacts on hardware. NF4 must expose the expected converted modules and FP16 compute. A diagnostic training-signal check requires finite NLL, 56 nonzero B tensors, a relative delta above 1e-6 in each target matrix, and active-adapter NLL below base/no-op/randomized-B. It fails if these signals are absent; passing is not a shipping certificate or causal proof of useful learning. Logit differences are reported. Partial JSON is written after each evaluated artifact; a crash still leaves phase logs. Final JSON is written before structural assertions so a failed check is preserved.
-
-Blind spots: no shuffled-label-trained adapter; one random seed; one fixed logit prompt; no bootstrap/uncertainty test; no safety rubric or original safety cases; six saturated contains tasks are not instruction-quality evaluation. A cleverly wrong checkpoint may pass. No real learning, safety or release-ready claim follows from this code until it runs and the missing tests are completed. The output decision remains DON'T SHIP.
-
-Historical code/output stays unchanged. New outputs go under `runs/`, which is excluded from Git to avoid publishing weights accidentally. Publish selected reviewed logs and durable model links after the actual run.
+**Incomplete:** source-specific candidate conversions, v2 primary-dev/safety-dev checkpoint selection and sweep orchestration are not validated. The runner deliberately blocks v2 training instead of silently choosing by loss. The GPU replica, full suite evaluation, persistent reload and release gate have not run. These limitations are tracked in status.json; DON'T SHIP remains in effect.

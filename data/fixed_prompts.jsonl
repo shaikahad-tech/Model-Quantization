@@ -1,0 +1,20 @@
+{"id": "logit-00", "prompt": "Why is a bicycle helmet useful?"}
+{"id": "logit-01", "prompt": "List three steps for washing hands."}
+{"id": "logit-02", "prompt": "What is 17 plus 26?"}
+{"id": "logit-03", "prompt": "Return a JSON object with city set to Paris."}
+{"id": "logit-04", "prompt": "Name two renewable energy sources."}
+{"id": "logit-05", "prompt": "Summarize why water freezes."}
+{"id": "logit-06", "prompt": "Convert 2 kilometers to meters."}
+{"id": "logit-07", "prompt": "Explain photosynthesis in one sentence."}
+{"id": "logit-08", "prompt": "Give one example of a prime number greater than 20."}
+{"id": "logit-09", "prompt": "Write a polite meeting cancellation."}
+{"id": "logit-10", "prompt": "Sort these numbers: 9, 2, 5."}
+{"id": "logit-11", "prompt": "What is the capital of Japan?"}
+{"id": "logit-12", "prompt": "Explain the difference between mass and weight."}
+{"id": "logit-13", "prompt": "Return only the word ready."}
+{"id": "logit-14", "prompt": "Name a mammal that lays eggs."}
+{"id": "logit-15", "prompt": "Translate hello into Spanish."}
+{"id": "logit-16", "prompt": "Give two steps for checking a bicycle tire."}
+{"id": "logit-17", "prompt": "Explain why a password should be unique."}
+{"id": "logit-18", "prompt": "What is 12 times 8?"}
+{"id": "logit-19", "prompt": "Write a short thank-you note."}

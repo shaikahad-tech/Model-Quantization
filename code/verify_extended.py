@@ -1,134 +1,111 @@
-"""Unexecuted GPU checks; no shipping verdict. Original eight-row script is unchanged."""
+"""Saved-artifact diagnostics. A passing diagnostic is not a release decision."""
+import argparse
 import gc
+import hashlib
 import json
-import math
+import sys
 from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from common import ROOT,atomic_json,inventory
+from experiment_data import encode,read_data
+from model_checks import calibrate_tiny_merge,merge_residual
+from variants import VARIANTS,load_variant
+from eval.stats import paired_bootstrap_diff
 
-from experiment_data import BASE, REVISION, encode, read_data
 
-
-def verify(run, tok):
+def nll_cases(model,tok,rows,historical=False):
     import torch
-    import bitsandbytes as bnb
-    from peft import LoraConfig, PeftModel, get_peft_model
+    cases=[]
+    with torch.inference_mode():
+        for i,row in enumerate(rows):
+            if historical:
+                user=row['instruction']+('\n'+row['input'] if row['input'] else '')
+                messages=[{'role':'user','content':user}]
+                prompt=tok.apply_chat_template(messages,tokenize=True,add_generation_prompt=True,return_dict=False)
+                full=tok.apply_chat_template(messages+[{'role':'assistant','content':row['output']}],tokenize=True,return_dict=False)
+                if full[:len(prompt)]!=prompt or not len(prompt)<len(full)<=512:raise ValueError('Historical formatter prefix/length failure')
+                item={'input_ids':full,'labels':[-100]*len(prompt)+full[len(prompt):]}
+            else:item=encode(tok,row)
+            ids=torch.tensor([item['input_ids']],device=model.device);labels=torch.tensor([item['labels']],device=model.device)
+            logits=model(ids).logits[:,:-1].float();targets=labels[:,1:]
+            total=torch.nn.functional.cross_entropy(logits.reshape(-1,logits.shape[-1]),targets.reshape(-1),ignore_index=-100,reduction='sum')
+            count=int((targets!=-100).sum());value=float(total)
+            if not torch.isfinite(total) or count==0:raise ValueError('Invalid NLL/denominator')
+            cases.append({'id':f'dolly-{i:03d}','index':i,'target_tokens':count,'nll_sum':value,'nll_per_token':value/count})
+    return cases
+
+
+def verify(run,tok,shuffled=None):
+    import torch
     from safetensors import safe_open
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    root = Path(__file__).resolve().parents[1]
-    _, rows = read_data(root / 'data/sampled_dataset.zip')
-    features = [encode(tok, row) for row in rows]
-    tasks = [json.loads(x) for x in (root / 'data/ship_tasks.jsonl').read_text().splitlines()]
-    result = {'executed_rows_per_model': 100, 'base_revision': REVISION, 'artifacts': {},
-              'controls': 'No-op LoRA and seeded randomized B with trained A and matched B norms',
-              'safety': 'NOT EVALUATED: original safety cases/rubric unavailable',
-              'shuffled_label_control': 'NOT RUN', 'release_decision': "DON'T SHIP"}
-    saved = {}
-    with safe_open(run / 'adapter/adapter_model.safetensors', framework='pt', device='cpu') as f:
-        saved = {k: f.get_tensor(k).float() for k in f.keys()}
-    b_norms = {k: v.norm().item() for k, v in saved.items() if k.endswith('.lora_B.weight')}
-    result['adapter_B_norms'] = b_norms
-    result['adapter_B_nonzero'] = sum(math.isfinite(n) and n > 0 for n in b_norms.values())
-    modules = [k.removeprefix('base_model.model.').removesuffix('.lora_A.weight')
-               for k in saved if k.endswith('.lora_A.weight')]
-    assert len(modules) == 56 and all(m.endswith(('q_proj', 'v_proj')) for m in modules)
-    cfg = json.loads((run / 'adapter/adapter_config.json').read_text())
-    assert cfg['r'] == 16 and cfg['lora_alpha'] == 32 and not cfg.get('use_rslora') and not cfg.get('use_dora')
-    assert not cfg.get('rank_pattern') and not cfg.get('alpha_pattern') and not cfg.get('modules_to_save')
-    assert cfg.get('bias') == 'none'
-    original_weights, fixed_logits = {}, {}
-    question = 'Why is a bicycle helmet useful?'
-    fixed_ids = tok.apply_chat_template([{'role': 'user', 'content': question}], tokenize=True,
-                                        add_generation_prompt=True, return_tensors='pt').cuda()
-    for name in ['base', 'noop', 'randomized_B', 'adapter', 'merged', '4bit']:
-        path = BASE if name in ['base', 'noop', 'randomized_B', 'adapter'] else run / ('quantized' if name == '4bit' else name)
-        kwargs = {'revision': REVISION} if path == BASE else {}
-        model = AutoModelForCausalLM.from_pretrained(path, torch_dtype=torch.float16, device_map={'': 0}, **kwargs)
-        artifact_tok = AutoTokenizer.from_pretrained(path, **kwargs)
-        assert artifact_tok.get_vocab() == tok.get_vocab() and artifact_tok.chat_template == tok.chat_template
-        assert artifact_tok.eos_token_id == tok.eos_token_id and artifact_tok.pad_token_id == tok.pad_token_id
-        if name == 'base':
-            original_weights = {m: model.get_submodule(m).weight.detach().float().cpu() for m in modules}
-        if name == 'adapter':
-            model = PeftModel.from_pretrained(model, run / 'adapter')
-        elif name in ['noop', 'randomized_B']:
-            model = get_peft_model(model, LoraConfig(r=16, lora_alpha=32, target_modules=['q_proj', 'v_proj'],
-                                                   bias='none', task_type='CAUSAL_LM'))
-            if name == 'randomized_B':
-                torch.manual_seed(20261111)
-                with torch.no_grad():
-                    for key, parameter in model.named_parameters():
-                        source = saved.get(key.replace('.default.', '.'))
-                        if source is not None:
-                            if 'lora_B' in key:
-                                noise = torch.randn_like(parameter)
-                                parameter.copy_(noise * (source.norm().to(noise.device) / noise.norm()))
-                            else:
-                                parameter.copy_(source.to(parameter.device))
-        if name == 'merged':
-            checks = []
+    from rerun import dtype_census,nf4_inventory
+    from eval.scorers import contains
+    run=Path(run);_,rows=read_data(ROOT/'data/sampled_dataset.zip')
+    if len(rows)!=100:raise ValueError('Expected exactly 100 heldouts')
+    prompts=[json.loads(x) for x in (ROOT/'data/fixed_prompts.jsonl').read_text().split('\n') if x]
+    if len(prompts)!=20:raise ValueError('Expected 20 fixed prompts')
+    tasks=[json.loads(x) for x in (ROOT/'data/ship_tasks.jsonl').read_text().split('\n') if x]
+    result={'artifacts':{},'controls':{},'status':'INCOMPLETE','safety':'NOT RUN by this diagnostic','merge_calibration':calibrate_tiny_merge()}
+    weights={}
+    with safe_open(run/'adapter/adapter_model.safetensors',framework='pt',device='cpu') as f:weights={k:f.get_tensor(k).float() for k in f.keys()}
+    modules=[k.removeprefix('base_model.model.').removesuffix('.lora_A.weight') for k in weights if k.endswith('.lora_A.weight')]
+    cfg=json.loads((run/'adapter/adapter_config.json').read_text())
+    if cfg.get('use_dora') or cfg.get('use_rslora') or cfg.get('rank_pattern') or cfg.get('alpha_pattern') or cfg.get('modules_to_save') or cfg.get('bias')!='none':raise ValueError('Unsupported merge variant')
+    originals={};logits_by_variant={};variants=[x for x in VARIANTS if x!='shuffled_label_adapter' or shuffled or (run/'shuffled_label_adapter').exists()]
+    for name in variants:
+        torch.cuda.empty_cache();torch.cuda.reset_peak_memory_stats();model,variant_tok=load_variant(name,run,shuffled)
+        if variant_tok.get_vocab()!=tok.get_vocab() or variant_tok.chat_template!=tok.chat_template or variant_tok.eos_token_id!=tok.eos_token_id or variant_tok.pad_token_id!=tok.pad_token_id:raise ValueError('Tokenizer identity mismatch')
+        if name=='base_fp16':originals={m:model.get_submodule(m).weight.detach().float().cpu() for m in modules}
+        if name=='merged_fp16':
+            result['merge_checks']=[]
             for m in modules:
-                a = saved['base_model.model.' + m + '.lora_A.weight']
-                b = saved['base_model.model.' + m + '.lora_B.weight']
-                before = original_weights[m]
-                after = model.get_submodule(m).weight.detach().float().cpu()
-                expected = (before + (cfg['lora_alpha'] / cfg['r']) * (b @ a)).half().float()
-                checks.append({'module': m, 'relative_delta': ((after-before).norm()/before.norm()).item(),
-                    'max_merge_residual': (after-expected).abs().max().item(),
-                    'within_fp16_tolerance': torch.allclose(after, expected, atol=1e-4, rtol=1e-3)})
-            result['merge_checks'] = checks
-        if name == '4bit':
-            converted = {n: str(m.compute_dtype) for n, m in model.named_modules() if isinstance(m, bnb.nn.Linear4bit)}
-            expected_names = {f'model.layers.{i}.{part}.{proj}' for i in range(28)
-                for part, projections in [('self_attn', ['q_proj', 'k_proj', 'v_proj', 'o_proj']),
-                                           ('mlp', ['gate_proj', 'up_proj', 'down_proj'])] for proj in projections}
-            result['quantized_modules'] = converted
-            result['quantized_config'] = model.config.quantization_config.to_dict() if hasattr(model.config.quantization_config, 'to_dict') else model.config.quantization_config
-            result['quantized_coverage_pass'] = set(converted) == expected_names
-            result['quantized_dtype_pass'] = all(v == 'torch.float16' for v in converted.values())
-            quant = result['quantized_config']
-            result['quantized_format_pass'] = bool(quant.get('load_in_4bit') and
-                quant.get('bnb_4bit_quant_type') == 'nf4' and quant.get('bnb_4bit_use_double_quant'))
-        model.eval()
-        cases, task_cases = [], []
+                r=merge_residual(originals[m],model.get_submodule(m).weight.detach(),weights['base_model.model.'+m+'.lora_A.weight'],weights['base_model.model.'+m+'.lora_B.weight'],cfg['lora_alpha']/cfg['r'])
+                result['merge_checks'].append(dict(r,module=m,passed=r['max_ulp']<=result['merge_calibration']['tolerance_ulp']))
+        if name=='merged_nf4':result['nf4_modules']=nf4_inventory(model)
+        cases=nll_cases(model,tok,rows);historic=nll_cases(model,tok,rows[:8],historical=True);fixed=[];task_results=[]
         with torch.inference_mode():
-            fixed_logits[name] = model(fixed_ids).logits[0, -1].float().cpu()
-            for i, feature in enumerate(features):
-                ids = torch.tensor([feature['input_ids']], device='cuda')
-                start = feature['labels'].count(-100)
-                logits = model(ids).logits[:, start-1:-1].float()
-                targets = ids[:, start:]
-                loss_sum = torch.nn.functional.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1), reduction='sum').item()
-                cases.append({'index': i, 'target_tokens': targets.numel(), 'nll_sum': loss_sum,
-                              'nll_per_token': loss_sum / targets.numel()})
-                del logits, targets, ids
-            for i, task in enumerate(tasks):
-                ids = tok.apply_chat_template([{'role': 'user', 'content': task['prompt']}], tokenize=True,
-                    add_generation_prompt=True, return_tensors='pt').cuda()
-                answer_ids = model.generate(ids, do_sample=False, max_new_tokens=64, pad_token_id=tok.pad_token_id)
-                answer = tok.decode(answer_ids[0, ids.shape[1]:], skip_special_tokens=True)
-                task_cases.append({'index': i, 'prompt': task['prompt'], 'expected': task['expected'],
-                    'answer': answer, 'contains_case_sensitive': task['expected'] in answer})
-        count = sum(c['target_tokens'] for c in cases)
-        result['artifacts'][name] = {'rows': cases, 'target_tokens': count,
-            'nll_per_token': sum(c['nll_sum'] for c in cases)/count, 'task_cases': task_cases,
-            'task_passes': sum(c['contains_case_sensitive'] for c in task_cases), 'task_denominator': len(task_cases)}
-        (run / 'verification_extended.partial.json').write_text(json.dumps(result, indent=2))
-        print(name, 'NLL', result['artifacts'][name]['nll_per_token'], 'rows', len(cases), 'tokens', count, flush=True)
-        del model
-        gc.collect()
-        torch.cuda.empty_cache()
-    result['fixed_prompt'] = question
-    result['fixed_logits'] = {name: {'relative_l2_vs_base': ((value-fixed_logits['base']).norm()/fixed_logits['base'].norm()).item(),
-        'max_abs_vs_base': (value-fixed_logits['base']).abs().max().item()} for name, value in fixed_logits.items()}
-    result['adapter_merged_logits_max_abs'] = (fixed_logits['adapter']-fixed_logits['merged']).abs().max().item()
-    result['noop_logits_match'] = torch.allclose(fixed_logits['base'], fixed_logits['noop'], atol=1e-5, rtol=1e-5)
-    result['learned_nll_beats_controls'] = all(result['artifacts']['adapter']['nll_per_token'] < result['artifacts'][n]['nll_per_token'] for n in ['base', 'noop', 'randomized_B'])
-    result['finite_nll'] = all(math.isfinite(c['nll_per_token']) for a in result['artifacts'].values() for c in a['rows'])
-    result['training_signal_pass'] = (result['adapter_B_nonzero'] == 56 and
-        result['learned_nll_beats_controls'] and result['finite_nll'] and
-        all(c['relative_delta'] > 1e-6 for c in result['merge_checks']))
-    result['limitations'] = 'One random control, one logit prompt, no shuffled-label adapter, no safety scoring or uncertainty estimate; NLL gains do not prove useful learning.'
-    torch.save(fixed_logits, run / 'fixed_prompt_logits.pt')
-    (run / 'verification_extended.json').write_text(json.dumps(result, indent=2))
-    assert result['noop_logits_match'] and result['quantized_coverage_pass'] and result['quantized_dtype_pass'] and result['quantized_format_pass']
-    assert all(c['within_fp16_tolerance'] for c in result['merge_checks'])
-    assert result['training_signal_pass'], 'No reliable signal against the implemented controls; inspect saved results'
+            for item in prompts:
+                ids=tok.apply_chat_template([{'role':'user','content':item['prompt']}],tokenize=True,return_dict=False,add_generation_prompt=True,return_tensors='pt').to(model.device)
+                fixed.append(model(ids).logits[0,-1].float().cpu())
+            for i,item in enumerate(tasks):
+                ids=tok.apply_chat_template([{'role':'user','content':item['prompt']}],tokenize=True,return_dict=False,add_generation_prompt=True,return_tensors='pt').to(model.device)
+                out=model.generate(ids,max_new_tokens=256,do_sample=False,pad_token_id=tok.pad_token_id);new=out[0,ids.shape[1]:]
+                answer=tok.decode(new,skip_special_tokens=True)
+                task_results.append({'id':i,'prompt':item['prompt'],'expected':item['expected'],'generation':answer,
+                    'score':contains(answer,item['expected']),'contains_case_sensitive':item['expected'] in answer,
+                    'finish_reason':'eos' if tok.eos_token_id in new.tolist() else 'length'})
+        logits_by_variant[name]=torch.stack(fixed)
+        artifact_path=run/('quantized' if name=='merged_nf4' else 'merged' if name=='merged_fp16' else 'adapter')
+        result['artifacts'][name]={'executed_rows':len(cases),'cases':cases,'nll_per_token':sum(c['nll_sum'] for c in cases)/sum(c['target_tokens'] for c in cases),
+            'historical_eight_row_nll':sum(c['nll_sum'] for c in historic)/sum(c['target_tokens'] for c in historic),'historical_eight_row_tokens':sum(c['target_tokens'] for c in historic),
+            'tasks':task_results,'dtype_census':dtype_census(model),'tokenizer_equal':True,'max_memory_allocated':torch.cuda.max_memory_allocated(),
+            'files':inventory(artifact_path) if name in ['merged_fp16','merged_nf4','fp16_adapter','nf4_adapter'] else [],'base_revision':'989aa7980e4cf806f80c7fef2b1adb7bc71aa306'}
+        atomic_json(run/'verification_extended.partial.json',result);del model;gc.collect();torch.cuda.empty_cache()
+    for name,artifact in result['artifacts'].items():
+        values=[c['nll_per_token'] for c in artifact['cases']]
+        artifact['nll_diff_ci']={ref:paired_bootstrap_diff(values,[c['nll_per_token'] for c in result['artifacts'][ref]['cases']]) for ref in ['base_fp16','merged_fp16']}
+    base=logits_by_variant['base_fp16'];noop=logits_by_variant['noop'];left=logits_by_variant['fp16_adapter'];right=logits_by_variant['merged_fp16']
+    result['controls']['noop_logits_match']=torch.allclose(base,noop,atol=1e-5,rtol=1e-5)
+    result['controls']['wrong_scale_detected']=result['merge_calibration']['wrong_scale_detected']
+    result['adapter_merge_logits']={'max_abs':float((left-right).abs().max()),'relative_l2':float((left-right).norm()/left.norm()),'top1_agreement':float((left.argmax(-1)==right.argmax(-1)).float().mean()),'prompts':len(prompts)}
+    controls=['noop','randomized_B','shuffled_label_adapter'];ci={}
+    for name in controls:
+        if name in result['artifacts']:
+            ci[name]=paired_bootstrap_diff([c['nll_per_token'] for c in result['artifacts'][name]['cases']],[c['nll_per_token'] for c in result['artifacts']['fp16_adapter']['cases']])
+    result['controls']['nll_advantage_ci']=ci
+    result['training_signal_pass']=len(ci)==3 and all(c['low']>0 for c in ci.values())
+    result['status']='DIAGNOSTICS COMPLETED; RELEASE GATE SEPARATE'
+    result['limitations']='NLL measures reference fit; S1 task superiority, safety, human refusal audit and remote reload are checked separately. Missing shuffled-label adapter prevents a positive training-signal finding.'
+    torch.save(logits_by_variant,run/'fixed_prompt_logits.pt');atomic_json(run/'verification_extended.json',result)
+    if not result['controls']['noop_logits_match'] or not all(c['passed'] for c in result['merge_checks']) or result['adapter_merge_logits']['top1_agreement']<.999:raise ValueError('Structural/logit checks failed; results preserved')
+    return result
+
+
+def main():
+    p=argparse.ArgumentParser();p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--shuffled-adapter',type=Path);a=p.parse_args()
+    from transformers import AutoTokenizer
+    from experiment_data import BASE,REVISION
+    verify(a.run_dir,AutoTokenizer.from_pretrained(BASE,revision=REVISION),a.shuffled_adapter)
+
+
+if __name__=='__main__':main()

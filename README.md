@@ -1,75 +1,54 @@
 # Model quantization experiment
 
-**DON'T SHIP — negative result; submission and reproduction remain incomplete.** The saved release gate compared the base against the **active LoRA adapter in bfloat16**. It did **not** test either exported artifact. The separate eight-example smoke test loaded base, merged FP16, and saved NF4 files and found a sampled weight change and lower reference NLL. Neither result proves useful learning or release readiness. The full 4-bit gate, 100-example comparison, negative controls and per-case safety investigation have **not run**.
+**DON'T SHIP — NOT RELEASED.** Historical adapter training and export ran, but the saved gate evaluated **base + active adapter in bfloat16**, not either exported artifact. The new CUDA replica, v2 training and saved-NF4 release evaluation are **NOT RUN**. Source code and CPU checks are not model-improvement evidence. [Generated status](status.md) / [source](status.json).
 
-## What actually ran
+## Evidence that exists
 
-| Check | Artifact / numerics | Coverage and result | Evidence |
-|---|---|---|---|
-| Historical verification | Base, merged FP16, serialized NF4; FP16 compute | 8 held-out rows, 457 target tokens each; 2 generated answers each; 1 weight matrix; 56 adapter B tensors | [Script](code/verify_artifacts.py), [output](evidence/verification.json), [redacted log](evidence/verification_log_redacted.txt) |
-| Historical release gate | Base vs base + `output/` adapter, bfloat16 | 6 contains-match tasks: 6/6 each; 8 mini benchmark aggregates; exit 2, `failed_rule=task_win` | [Command/scope](docs/gate.md), [redacted log](evidence/ship_log_redacted.txt), [verdict](evidence/ship_verdict_redacted.json) |
-| Exported-model release gate | Merged FP16 / saved NF4 | Neither evaluated by that gate | No result |
-| Extended evaluation | Base, active adapter, merged, NF4, controls | Not run; historical per-case safety outputs and denominators absent | [Outstanding work](status.md) |
+| Check | Observed scope | Result / evidence |
+|---|---|---|
+| Historical smoke test | Base, merged FP16, saved NF4; 8 rows, 457 targets each | NLL 2.513467 / 2.352026 / 2.378493; [JSON](evidence/verification.json), [script](code/verify_artifacts.py) |
+| Adapter activity | 56 nonzero B tensors; one target matrix | Relative q_proj delta 0.006276786; not proof of meaningful learning |
+| Historical gate | Active adapter, bfloat16; 6 contains tasks + eight mini-suite aggregates | Task 1.00→1.00; safety 1.00→0.45; [log](evidence/ship_log_redacted.txt), [scope](docs/gate.md) |
+| New release gate | Saved NF4, all preregistered criteria | NOT RUN on a real artifact; [gate implementation](eval/ship_gate.py), [criteria](configs/success_criteria.yaml) |
 
-The adapter gate reported safety **1.00 → 0.45**, common sense **0.825 → 0.750**, and tool calling **0.700 → 0.625**. These are warnings about the adapter configuration, not measured safety scores for the NF4 file. Exact mini-suite counts cannot be established from the saved output; we do not infer denominators from rounded scores.
+The old strict task-win gate was unsatisfiable: the base already scored 6/6. Safety is a serious warning; its cause is untested. Mini-suite denominators and per-case outputs were not retained. **If** n=40, conditional Wilson intervals suggest a large safety drop while the three-case common-sense/tool-call differences are inconclusive. Forty is only the smallest denominator consistent with displayed fractions, not an observed sample size. [Conditional analysis](docs/gate.md).
 
-```text
-Historical smoke test: 8 rows, 457 answer tokens per artifact
-adapter_B_nonzero = 56/56
-layer_0_q_proj_relative_delta = 0.0062767863273620605
-NLL/token: base=2.5134674371 merged=2.3520263926 NF4=2.3784927409
-structural_pass=true; quantized_close_nll=true
-```
+**Replication evidence:** the two historical VMs reported validation losses 1.3302 / 1.3303, merged NLL 2.351804 / 2.352026, NF4 NLL 2.378590 / 2.378493, and sampled q deltas 0.006275385 / 0.006276786. Greedy text differed. The handwashing output is a run-specific anecdote, not an isolated quantization defect. VM1 export was interrupted and only a verification tail survives; this limits provenance.
 
-These booleans are narrow script checks, **not** a shipping decision. Random changes, incorrect merge scaling, contamination, wrong masks and unsafe behavior can pass them. The evaluator also joins context with one newline whereas the data filter uses two; scores are not a validated match to the training formatter.
+## Materials and selection bias
 
-## Materials
+[Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct), revision `989aa7980e4cf806f80c7fef2b1adb7bc71aa306`, has 1,543,714,304 base parameters. Its scale fits the historical T4 and its chat template is inspectable. [Databricks Dolly 15k](https://huggingface.co/datasets/databricks/databricks-dolly-15k) is English, so the author can read prompts and responses; comprehensive manual scoring is not claimed.
 
-[Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct), revision `989aa7980e4cf806f80c7fef2b1adb7bc71aa306`, was chosen for its T4-compatible size and inspectable chat template. Data: [Databricks Dolly 15k](https://huggingface.co/datasets/databricks/databricks-dolly-15k), English, CC BY-SA 3.0 according to its dataset card. English permits direct reading of prompts and answers; this does not imply all answers were manually scored. Seed 20261111; 1,500 selected rows: 1,400 submitted to training (10% validation: 1,260 train / 140 validation) and 100 separate holdouts.
+The source was shuffled with seed 20261111; the first 1,500 unique complete rows with **≤480 rendered tokens** were selected. Exact-row hashes deduplicated selections. Long rows were excluded and `category` was dropped. Training input has 1400 rows (10% internal validation: 1,260/140); heldout has 100. Computed warnings: 2 duplicate instruction occurrences beyond the first, 4 train/holdout instruction pairs at word-set Jaccard≥0.8, and 0 exact full-row overlaps. [Data card](data/DATA_CARD.md), [frozen ZIP](data/sampled_dataset.zip).
 
-[Exact sampled data](data/sampled_dataset.zip), SHA-256:
+SHA-256: train `f2851c4d747445d727e86fd03483bfce30250b0843db25b38f8a86d3a4aeaab3`; heldout `87fb5abbb936b05909856c6f22ec56fdc84d106b0d737aee3e0d49b60bcf1002`. Upstream pinned template string: `cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f`, rechecked by a real-tokenizer CPU test; this does not recover the lost runtime's tokenizer hash.
 
-- `train.jsonl`: `f2851c4d747445d727e86fd03483bfce30250b0843db25b38f8a86d3a4aeaab3`
-- `heldout.jsonl`: `87fb5abbb936b05909856c6f22ec56fdc84d106b0d737aee3e0d49b60bcf1002`
-- Pinned upstream chat-template UTF-8 string: `cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f`. Retrieved during this audit; **not** a recorded hash of the lost runtime tokenizer. EOS `<|im_end|>`; padding `<|endoftext|>`.
+Historical CLI 0.77.2 is named only by the public alias `trainer`; Transformers was 5.22.1. The new pipeline uses Transformers/PEFT/bitsandbytes directly so masks, merges and artifact identity are inspectable. [Code license](LICENSE), [notices](NOTICE.md), [data/model licenses](DATA_LICENSES.md). MIT applies to original code, not Dolly data or model weights.
 
-Historical stack: CLI 0.77.2 (public alias `trainer`), Transformers 5.22.1, T4, r=16 / alpha=32 q/v LoRA, NF4 training, length 512, one epoch / 315 optimizer steps. The CLI automated training/export/gating; its identity is redacted at the owner's request. The alias is not an installable replacement. [Redaction note](RAW_LOGS_NOTE.md).
+## Memory: analytic, measured and unknown
 
-## Memory: estimates versus sampled peaks
+| Quantity | Kind | Value / explanation |
+|---|---|---|
+| NF4 linears | Analytic | 655,097,856 bytes |
+| Tied FP16 embedding | Analytic | 466,747,392 bytes; embeddings are not packed to four bits |
+| NF4 floor before stats | Analytic | 1,122,135,040 bytes (~1.122 GB), replacing the unattainable all-parameters-at-four-bits estimate |
+| Double-quant stats + bias/norm | Analytic | 20,791,680 + 289,792 bytes |
+| NF4 file estimate | Analytic | 1,142,926,720 bytes versus historical 1,143,327,349 bytes (~0.035% difference) |
+| FP32 nonquantized upcast | Expected, needs GPU census | Additional 467,037,184 bytes during k-bit training |
+| Training device peak | Sampled | 5,395 MiB = 5.657 GB; 235 samples, mean interval 2.167 s |
+| CLI GPU peak display | Reported, semantics unverified | 4.5/14.6 GB in both VM logs; not independently identified as allocated or reserved memory |
+| Merge / quantize device peaks | Sampled | 115 / 1,257 MiB; host peaks absent |
 
-Decimal GB below; [detailed assumptions](docs/memory.md). These are reconstructed estimates: no timestamped pre-training budget was retained.
+[Full memory budget](docs/memory.md) separates weights, adapters, optimizer, logits, activations and export buffers. No timestamped historical pre-run worksheet exists. The new [budget generator](code/budget.py) records actual config assumptions before training; new CPU arithmetic is not a measured GPU peak. Raw GPU output: [train](evidence/nvidia_smi_train.txt), [merge](evidence/nvidia_smi_merge.txt), [quantize](evidence/nvidia_smi_quantize.txt).
 
-| Component | Formula / allowance | Estimate GB | Observation |
-|---|---|---:|---|
-| Quantized base | 1.544B × 0.5 bytes lower bound; scales/high-precision tensors extra | ≥0.772; ~1.14 file-size proxy | Allocation unmeasured |
-| Adapter + gradients | 2,179,072 × 2 × 2 bytes | 0.0087 | Not separately measured |
-| Adam + possible master | 2,179,072 × (8+4) bytes | 0.0261 | Not separately measured |
-| Logits | 512 × 151,936 × 2 or 4 bytes | 0.156 / 0.311 | May overlap during loss |
-| Activations / backward / workspace | Shape-dependent allowance | 2–3 | Not separately measured |
-| CUDA / allocator | Allowance | 0.7–1.4 | Not separately measured |
-| Training total | Rounded envelope | 4–6 | **5,395 MiB = 5.657 GB**; 235 samples / 2 s |
-| CPU merge | 2 × 1.544B × 2 bytes + buffers | 7–10 host; 0–1 GPU | **115 MiB = 0.121 GB GPU**; 111 samples / 1 s; host peak missing |
-| Quantization | 3.09 source + 1.14 packed + 1–3 workspace | 5.2–7.2 host; ~1–2 GPU allowance | **1,257 MiB = 1.318 GB GPU**; 185 samples / 1 s; host peak missing |
+## Running and reviewing
 
-Unchanged raw GPU output: [train](evidence/nvidia_smi_train.txt), [merge](evidence/nvidia_smi_merge.txt), [quantize](evidence/nvidia_smi_quantize.txt). Sampling misses short peaks. CUDA context and reserved memory make device usage exceed tensor bytes; CPU export explains low merge GPU use. Exact gaps cannot be apportioned without allocator and host measurements.
-
-## Deliverables and reproduction
-
-- [Report PDF](report.pdf) / [source](report.md): at most two pages.
-- [Silent-failure matrix](docs/silent-failures.md), [AI disclosure and reflection](docs/disclosure.md).
-- [Historical notebook](code/experiment_notebook_redacted.ipynb): failed cells / first-runtime outputs retained, retry provenance stated; redacted and not a run-all workflow.
-- [Historical verification](code/verify_artifacts.py) and [saved output](evidence/verification.json): the check that actually ran.
-- [New rerun instructions](docs/reproduction.md): a public Hugging Face workflow. **GPU execution pending; new code is not historical evidence.**
-- [Public evidence ZIP](experiment-evidence.zip): documentation, code, redacted logs, raw GPU samples and exact sampled data. Model weights are absent.
-- [Raw-log delivery status](RAW_LOGS_NOTE.md): originals exist locally; email delivery unverified.
+- [Colab notebook](colab/run_all.ipynb) and [reproduction instructions](docs/reproduction.md): explicit persistence, config, seeds, checkpoint resume and failure preservation. The Colab lock must come from a real runtime; it has not been fabricated.
+- [Report](report.pdf) / [source](report.md), [failure matrix](docs/silent-failures.md), [AI disclosure](docs/disclosure.md).
+- [Evaluation/scorers/statistics](eval/), [configs](configs/), [release-gate specification](docs/gate_v2.md).
+- [Historical script inventory](code/README.md); the old 100-row draft is archived, not evidence of execution.
+- [Public ZIP](experiment-evidence.zip), [release hashes](RELEASE_HASHES.txt), [raw-log/redaction note](RAW_LOGS_NOTE.md), [model card: NOT RELEASED](MODEL_CARD.md).
 
 ## What must change before ship
 
-1. Recover or regenerate adapter, merged and NF4 weights; save durable artifacts, hashes, tokenizer files and dependency versions.
-2. Run the gate on the **saved NF4 artifact** (`--tuned ./quantized` in the original CLI); verify loaded modules and reported numerics. Compare base, active adapter, merged and NF4 on identical cases.
-3. Obtain safety cases and denominators; score each with a documented rubric, diagnose regressions, fix data/training/masking and rerun. Do not simply exclude failing cases.
-4. Run all 100 heldouts with per-row NLL, negative controls including shuffled-label training, all-module merge checks and fixed-prompt logits. Use representative, non-saturated tasks.
-5. Audit all training loss masks, EOS/padding and template; rerun final preflight. Record host/GPU peaks and a budget **before** the next training run.
-6. Execute the workflow end to end, preserve failures, deliver original raw logs privately, and establish accessible weight links. Then reconsider the verdict.
-
-Documentation corrections do not complete these experiment requirements.
+Run and pass the historical-recipe replica; investigate any same-mask validation/NLL discrepancy before progressing. Select a non-saturated task from saved base baselines, build licensed disjoint replay data, and execute the LR/seed/shuffled-label experiments. Evaluate seven core variants plus no-op/randomized-B controls on identical cases. Complete the human refusal-label audit and durable remote reload. Only [G1–G9](docs/gate_v2.md), evaluated on the saved NF4 artifact under the committed criteria, may produce SHIP. Missing evidence keeps DON'T SHIP. No public model release or email delivery is claimed.

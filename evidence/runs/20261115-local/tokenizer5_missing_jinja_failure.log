@@ -1,0 +1,43 @@
+Public transcript: workspace path normalized; original retained locally.
+test_context_separator (test_data.DataChecks.test_context_separator) ... ok
+test_mask_zero_target (test_data.DataChecks.test_mask_zero_target) ... ok
+test_near_duplicates (test_data.DataChecks.test_near_duplicates) ... ok
+test_original_dataset (test_data.DataChecks.test_original_dataset) ... ok
+test_prompt_mask_and_eos (test_data.DataChecks.test_prompt_mask_and_eos) ... ok
+test_real_tokenizer (test_data.DataChecks.test_real_tokenizer) ... [transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+ERROR
+test_reject_changed_dataset (test_data.DataChecks.test_reject_changed_dataset) ... ok
+test_reject_missing_eos (test_data.DataChecks.test_reject_missing_eos) ... ok
+test_reject_prefix_mismatch (test_data.DataChecks.test_reject_prefix_mismatch) ... ok
+test_reject_truncation (test_data.DataChecks.test_reject_truncation) ... ok
+test_return_dict_false_contract (test_data.DataChecks.test_return_dict_false_contract) ... ok
+test_unicode_jsonl (test_data.DataChecks.test_unicode_jsonl) ... ok
+
+======================================================================
+ERROR: test_real_tokenizer (test_data.DataChecks.test_real_tokenizer)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[workspace]/code/test_data.py", line 107, in test_real_tokenizer
+    item=encode(tok,row)
+         ^^^^^^^^^^^^^^^
+  File "[workspace]/code/experiment_data.py", line 72, in encode
+    prompt = tok.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_dict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/model-quantization-tokenizer5/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 3163, in apply_chat_template
+    rendered_chat, generation_indices = render_jinja_template(
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/model-quantization-tokenizer5/lib/python3.11/site-packages/transformers/utils/chat_template_utils.py", line 639, in render_jinja_template
+    compiled_template = _compile_jinja_template(chat_template)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/model-quantization-tokenizer5/lib/python3.11/site-packages/transformers/utils/chat_template_utils.py", line 530, in _compile_jinja_template
+    return _cached_compile_jinja_template(chat_template)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/model-quantization-tokenizer5/lib/python3.11/site-packages/transformers/utils/chat_template_utils.py", line 536, in _cached_compile_jinja_template
+    raise ImportError(
+ImportError: apply_chat_template requires jinja2 to be installed. Please install it using `pip install jinja2`.
+
+----------------------------------------------------------------------
+Ran 12 tests in 3.493s
+
+FAILED (errors=1)

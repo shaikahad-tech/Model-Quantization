@@ -1,0 +1,8 @@
+[
+  {
+    "path": "data/sampled_dataset.zip!train.jsonl",
+    "kind": "email",
+    "match_sha256": "6dc0198ffa0b5d6315c616e273a92ca5263e0cb2e0229d02212a6858fa19890a",
+    "reason": "Public Dolly example address in an email-format teaching example; original dataset bytes preserved."
+  }
+]

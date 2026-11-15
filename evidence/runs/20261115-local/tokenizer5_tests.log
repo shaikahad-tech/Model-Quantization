@@ -1,0 +1,19 @@
+Public transcript: workspace path normalized; original retained locally.
+test_context_separator (test_data.DataChecks.test_context_separator) ... ok
+test_mask_zero_target (test_data.DataChecks.test_mask_zero_target) ... ok
+test_near_duplicates (test_data.DataChecks.test_near_duplicates) ... ok
+test_original_dataset (test_data.DataChecks.test_original_dataset) ... ok
+test_prompt_mask_and_eos (test_data.DataChecks.test_prompt_mask_and_eos) ... ok
+test_real_tokenizer (test_data.DataChecks.test_real_tokenizer) ... [transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+ok
+test_reject_changed_dataset (test_data.DataChecks.test_reject_changed_dataset) ... ok
+test_reject_missing_eos (test_data.DataChecks.test_reject_missing_eos) ... ok
+test_reject_prefix_mismatch (test_data.DataChecks.test_reject_prefix_mismatch) ... ok
+test_reject_truncation (test_data.DataChecks.test_reject_truncation) ... ok
+test_return_dict_false_contract (test_data.DataChecks.test_return_dict_false_contract) ... ok
+test_unicode_jsonl (test_data.DataChecks.test_unicode_jsonl) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 2.002s
+
+OK

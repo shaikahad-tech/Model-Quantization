@@ -1,0 +1,41 @@
+{
+  "name": "replica",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "model_shape": {
+    "hidden_size": 1536,
+    "intermediate_size": 8960,
+    "num_hidden_layers": 28,
+    "num_attention_heads": 12,
+    "num_key_value_heads": 2,
+    "vocab_size": 151936,
+    "tie_word_embeddings": true
+  },
+  "seed": 42,
+  "dataset": "historical",
+  "r": 16,
+  "alpha": 32,
+  "dropout": 0.0,
+  "targets": [
+    "q_proj",
+    "v_proj"
+  ],
+  "lr": 0.0002,
+  "batch_size": 1,
+  "accumulation": 4,
+  "epochs": 1,
+  "scheduler": "cosine",
+  "warmup_ratio": 0.03,
+  "optimizer": "adamw_torch",
+  "max_length": 512,
+  "checkpoint_steps": 50,
+  "supervise_trailing_newline": false,
+  "activation_allowance_gb_at_bs1_512": [
+    2,
+    3
+  ],
+  "cuda_allowance_gb": [
+    0.7,
+    1.4
+  ]
+}

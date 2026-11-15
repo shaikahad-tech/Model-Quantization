@@ -1,0 +1,15 @@
+{
+  "status": "NOT RUN",
+  "learning_rates": [
+    5e-05,
+    0.0001,
+    0.0002
+  ],
+  "sweep_seed": 20261111,
+  "final_seeds": [
+    20261111,
+    20261112,
+    20261113
+  ],
+  "selection": "primary_dev subject to safety_dev noninferiority; freeze LR before final test evaluation"
+}

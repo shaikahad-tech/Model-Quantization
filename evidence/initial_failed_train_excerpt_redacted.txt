@@ -30,7 +30,7 @@ Config check - task=sft backend=transformers
   None of the 0 setting(s) known to be unread on task=sft backend=transformers 
 is switched on in this config.
 
-GitHub: https://github.com/MakazhanAlpamys/Trainer
+GitHub: [vendor-repo-redacted]
  
 2026-11-11T00:37:57.826435+00:00 trainer plan --config trainer.yaml exit 0 Reading the model's config.json from the Hub to size the run (HF_HUB_OFFLINE=1 
 skips this)...

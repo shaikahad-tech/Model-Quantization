@@ -1,3 +1,7 @@
 *.pdf binary
 *.zip binary
 evidence/*.log -whitespace
+*.sh text eol=lf
+*.jsonl text eol=lf
+*.safetensors binary
+*.ipynb -diff
