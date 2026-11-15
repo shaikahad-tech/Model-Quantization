@@ -23,15 +23,26 @@ def exact_numeric(answer,expected):
     except InvalidOperation:return 0.0
 
 
+def strict_json(answer):
+    def reject_constant(value):raise ValueError('Non-JSON numeric constant: '+value)
+    def object_pairs(pairs):
+        result={}
+        for key,value in pairs:
+            if key in result:raise ValueError('Duplicate JSON key: '+key)
+            result[key]=value
+        return result
+    return json.loads(answer,parse_constant=reject_constant,object_pairs_hook=object_pairs)
+
+
 def json_schema_valid(answer,schema):
     import jsonschema
     jsonschema.Draft202012Validator.check_schema(schema)
-    try:jsonschema.validate(json.loads(answer),schema);return 1.0
+    try:jsonschema.validate(strict_json(answer),schema);return 1.0
     except (ValueError,jsonschema.ValidationError):return 0.0
 
 
 def json_field_f1(answer,expected):
-    try:value=json.loads(answer)
+    try:value=strict_json(answer)
     except ValueError:return 0.0
     if not isinstance(value,dict) or not isinstance(expected,dict):return 0.0
     a={(k,json.dumps(v,sort_keys=True)) for k,v in value.items()};b={(k,json.dumps(v,sort_keys=True)) for k,v in expected.items()}
@@ -39,7 +50,7 @@ def json_field_f1(answer,expected):
 
 
 def tool_call_match(answer,expected):
-    try:value=json.loads(answer)
+    try:value=strict_json(answer)
     except ValueError:return 0.0
     return float(isinstance(value,dict) and value.get('name')==expected.get('name') and value.get('arguments')==expected.get('arguments') and set(value)=={'name','arguments'})
 

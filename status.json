@@ -20,15 +20,15 @@
     },
     "Local verifier tests": {
       "status": "PASSED",
-      "evidence": "evidence/runs/20261115-local/; 25 CPU tests and 12 tokenizer tests on Transformers 5.22.1"
+      "evidence": "evidence/runs/20261115-local/sweep_tests.log; 33 CPU tests, plus separate 12 tokenizer tests on Transformers 5.22.1"
     },
     "Replica training": {
-      "status": "NOT RUN",
-      "evidence": "Requires Colab CUDA execution and persistence"
+      "status": "RUNNING",
+      "evidence": "T4 replica-20261115; durable logs/checkpoints on approved Drive mount; final checks pending"
     },
     "Colab environment lock": {
-      "status": "NOT RUN",
-      "evidence": "Must come from an actual Colab freeze; no lock fabricated"
+      "status": "CAPTURED; IMPORT CHECK PASSED",
+      "evidence": "evidence/runs/20261115-colab/requirements-lock.txt; initial torchvision incompatibility and repair logs retained"
     },
     "Task selection": {
       "status": "NOT RUN",
@@ -40,7 +40,7 @@
     },
     "LR sweep and three seeds": {
       "status": "NOT RUN",
-      "evidence": "configs/sweep.yaml"
+      "evidence": "code/sweep.py CPU-tested; GPU sweep NOT RUN"
     },
     "Seven core variants plus two controls": {
       "status": "NOT RUN",

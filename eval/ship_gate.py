@@ -10,15 +10,18 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'code'))
 from common import ROOT,atomic_json,check_files,inventory,sha256,utc,valid_stage
 from eval.scorers import score
+from variants import artifact_fingerprint
 from eval.stats import paired_bootstrap_diff,noninferior
 
 
-def paired_cases(run,suite,a='merged_nf4',b='base_fp16'):
+def paired_cases(run,suite,a='merged_nf4',b='base_fp16',shuffled=None):
     def read(variant):
         rows=[json.loads(x) for x in (run/'eval'/variant/(suite+'.jsonl')).read_text().split('\n') if x]
         if not rows or len({r['id'] for r in rows})!=len(rows):raise ValueError('Empty or duplicate cases')
         if any(r['variant']!=variant or r['suite']!=suite for r in rows):raise ValueError('Variant/suite mismatch')
+        fingerprint=artifact_fingerprint(variant,run,shuffled)
         for row in rows:
+            if row['artifact_fingerprint']!=fingerprint:raise ValueError('Evaluation artifact changed')
             measured=score(row['generation'],row['item'])
             if not math.isfinite(row['score']) or measured!=row['score'] or row['prompt']!=row['item']['prompt']:raise ValueError('Saved score/prompt mismatch')
         return {r['id']:r for r in rows}
@@ -30,7 +33,7 @@ def paired_cases(run,suite,a='merged_nf4',b='base_fp16'):
     return [left[i]['score'] for i in ids],[right[i]['score'] for i in ids],left
 
 
-def compute_gate(run,criteria_path=ROOT/'configs/success_criteria.yaml'):
+def compute_gate(run,criteria_path=ROOT/'configs/success_criteria.yaml',shuffled=None):
     run=Path(run);c=json.loads(Path(criteria_path).read_text());gates={};config={'n_boot':c['bootstrap_samples'],'seed':c['bootstrap_seed']}
     def record(name,fn):
         try:
@@ -87,9 +90,9 @@ def compute_gate(run,criteria_path=ROOT/'configs/success_criteria.yaml'):
         return {'passed':all(x['passed'] for x in results.values()) and math.isfinite(gap) and gap<=c['quantization']['max_nll_increase'],'comparisons':results,'nll_gap':gap,'nll_n':100}
     record('G5',parity)
     def controls():
-        v=json.loads((run/'verification_extended.json').read_text());a,b,_=paired_cases(run,'primary',b='shuffled_label_adapter');ci=paired_bootstrap_diff(a,b,**config)
+        v=json.loads((run/'verification_extended.json').read_text());a,b,_=paired_cases(run,'primary',b='shuffled_label_adapter',shuffled=shuffled);ci=paired_bootstrap_diff(a,b,**config)
         flags=v['controls']
-        return {'passed':flags['noop_logits_match'] and flags['wrong_scale_detected'] and ci['low']>0 and v['adapter_merge_logits']['top1_agreement']>=c['controls']['min_top1_agreement'],
+        return {'passed':flags['noop_logits_match'] and flags['wrong_scale_detected'] and v['adapter_merge_logits']['prompts']>=20 and ci['low']>0 and v['adapter_merge_logits']['top1_agreement']>=c['controls']['min_top1_agreement'],
                 'noop_logits_match':flags['noop_logits_match'],'wrong_scale_detected':flags['wrong_scale_detected'],'shuffled_primary_diff':ci,'logit_prompts':v['adapter_merge_logits']['prompts']}
     record('G6',controls)
     def durability():
@@ -109,8 +112,8 @@ def compute_gate(run,criteria_path=ROOT/'configs/success_criteria.yaml'):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
-    result=compute_gate(a.run_dir);atomic_json(a.out,result);print(result['decision']);print('Failing gates:',','.join(result['failed_gates']))
+    p=argparse.ArgumentParser();p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--shuffled-adapter',type=Path);a=p.parse_args()
+    result=compute_gate(a.run_dir,shuffled=a.shuffled_adapter);atomic_json(a.out,result);print(result['decision']);print('Failing gates:',','.join(result['failed_gates']))
     # A negative decision is a completed gate, not an execution exception.
 
 

@@ -1,0 +1,25 @@
+...............E............Sliding Window Attention is enabled but not implemented for `sdpa`; unexpected results may be encountered.
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+...
+======================================================================
+ERROR: test_completed_evidence_must_match (test_eval_resume.EvalResumeChecks.test_completed_evidence_must_match)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repository>/code/test_eval_resume.py", line 14, in test_completed_evidence_must_match
+    row=dict(id='a',item=item,prompt='Answer',variant='merged_nf4',suite='primary',suite_sha256='suite',artifact_fingerprint='weights',generation='yes',score=score('yes',item))
+                                                                                                                                                              ^^^^^^^^^^^^^^^^^
+  File "<repository>/eval/scorers.py", line 55, in score
+    return funcs[name](answer,item.get('schema') if name=='json_schema_valid' else item.get('expected'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repository>/eval/scorers.py", line 13, in contains
+    if not aliases or any(not isinstance(a,str) or not a.strip() for a in aliases):raise ValueError('Nonempty aliases required')
+                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Nonempty aliases required
+
+----------------------------------------------------------------------
+Ran 31 tests in 2.191s
+
+FAILED (errors=1)

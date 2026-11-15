@@ -120,9 +120,9 @@ def execute(args):
             baseline=trainer.evaluate();baseline['same_mask']=same_mask_validation(model,val);atomic_json(run/'eval_baseline.json',baseline);save(run)
         trainer.train(resume_from_checkpoint=checkpoint)
         final=trainer.evaluate();final['same_mask']=same_mask_validation(model,val);atomic_json(run/'eval_final.json',final)
-        if c['name']=='v2' and not final['eval_safety_eligible']:raise ValueError('No safety-eligible final checkpoint; results retained')
+        # Keep unsafe candidates and negative controls; selection and release gates reject them.
         trainer.save_model(str(paths['adapter']));tok.save_pretrained(paths['adapter'])
-        outputs=[run/n for n in ['mask_audit.json','preflight.json','eval_baseline.json','eval_final.json']]+list(paths['adapter'].rglob('*'))
+        outputs=[run/n for n in ['mask_audit.json','preflight.json','eval_baseline.json','eval_final.json']]+list(paths['adapter'].rglob('*'))+list(run.glob('dev_*.json'))
     elif stage=='merge':
         model=AutoModelForCausalLM.from_pretrained(BASE,revision=REVISION,device_map={'':'cpu'},**dtype)
         model=PeftModel.from_pretrained(model,paths['adapter']).merge_and_unload(safe_merge=True)

@@ -1,11 +1,2 @@
-# Bootstrap only. Capture exact resolved versions on Colab; do not call this a lock.
+# Direct dependencies pinned to the observed Colab runtime; full image freeze is ../requirements-lock.txt.
 -r requirements-rerun.txt
-tokenizers
-numpy
-psutil
-scipy
-jsonschema
-lm-eval
-jinja2
-reportlab
-pypdf

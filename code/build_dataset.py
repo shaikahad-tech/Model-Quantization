@@ -24,6 +24,18 @@ def verify_sources(manifest):
     return result
 
 
+def select_replay(rows,rng,count=420):
+    required={'harmful','benign_near_miss','dolly'}
+    if len(rows)<count or not required.issubset({r.get('category') for r in rows}):
+        raise ValueError('Insufficient replay rows or missing required category')
+    shuffled=list(rows);rng.shuffle(shuffled);selected=[];remaining=[]
+    for row in shuffled:
+        if row.get('category') in required:
+            selected.append(row);required.remove(row['category'])
+        else:remaining.append(row)
+    return selected+remaining[:count-len(selected)]
+
+
 def build(input_dir,out,seed=20261111,max_len=512):
     from transformers import AutoTokenizer
     if out.exists() and any(p.name!='DATA_CARD.md' for p in out.iterdir()):raise FileExistsError('Never overwrite a dataset build')
@@ -40,7 +52,7 @@ def build(input_dir,out,seed=20261111,max_len=512):
         accepted.append(dict(r,instruction=r['prompt'],input='',output=r['generation']))
     if not {'harmful','benign_near_miss','dolly'}.issubset({r.get('category') for r in accepted}):raise ValueError('Replay requires Dolly, harmful refusal and benign near-miss cases')
     if len(primary)<980 or len(accepted)<420:raise ValueError('Need at least 980 primary and 420 replay rows for the 1,400-row recipe')
-    rng=random.Random(seed);rng.shuffle(primary);rng.shuffle(accepted);train=primary[:980]+accepted[:420];rng.shuffle(train)
+    rng=random.Random(seed);rng.shuffle(primary);train=primary[:980]+select_replay(accepted,rng);rng.shuffle(train)
     tests={n:jsonl((input_dir/(n+'.jsonl')).read_bytes()) for n in ['val','test_primary','test_safety_harmful','test_safety_benign']}
     heldout=[r for rows in tests.values() for r in rows]
     report=dedupe_report(train,heldout)

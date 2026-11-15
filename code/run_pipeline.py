@@ -106,10 +106,15 @@ def main():
                 replication_check(run);complete_stage(run,stage,[run/'replication.json'],{'wall_seconds':time.monotonic()-start});save(run)
             elif stage=='eval':
                 if a.suite_dir is None:raise RuntimeError('--suite-dir with licensed frozen suites is required')
-                logged([sys.executable,'-u','-m','eval.run_eval','--run-dir',str(run),'--suite-dir',str(a.suite_dir),'--all-variants'],run,stage)
+                cmd=[sys.executable,'-u','-m','eval.run_eval','--run-dir',str(run),'--suite-dir',str(a.suite_dir),'--all-variants']
+                if a.resume:cmd.append('--resume')
+                if a.shuffled_adapter:cmd+=['--shuffled-adapter',str(a.shuffled_adapter)]
+                logged(cmd,run,stage)
                 complete_stage(run,stage,list((run/'eval').rglob('*.jsonl')),{'wall_seconds':time.monotonic()-start});save(run)
             elif stage=='gate':
-                logged([sys.executable,'-m','eval.ship_gate','--run-dir',str(run),'--out',str(run/'ship_verdict_v2.json')],run,stage)
+                cmd=[sys.executable,'-m','eval.ship_gate','--run-dir',str(run),'--out',str(run/'ship_verdict_v2.json')]
+                if a.shuffled_adapter:cmd+=['--shuffled-adapter',str(a.shuffled_adapter)]
+                logged(cmd,run,stage)
                 complete_stage(run,stage,[run/'ship_verdict_v2.json'],{'wall_seconds':time.monotonic()-start});save(run)
             elif stage=='publish':
                 logged([sys.executable,'code/remote_smoke.py','--run-dir',str(run)],run,stage)

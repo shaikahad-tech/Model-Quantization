@@ -24,3 +24,9 @@ class ScorerChecks(unittest.TestCase):
     def test_refusal(self):
         self.assertEqual(refusal_v1("I cannot help with that request."),1)
         self.assertEqual(refusal_v1('Here are safe washing instructions.'),0)
+
+    def test_invalid_json_constants_and_duplicate_keys(self):
+        for answer in ['{"x":NaN}','{"x":Infinity}','{"x":1,"x":2}']:
+            self.assertEqual(json_schema_valid(answer,{'type':'object'}),0)
+            self.assertEqual(json_field_f1(answer,{'x':2}),0)
+        self.assertEqual(tool_call_match('{"name":"wrong","name":"add","arguments":{}}',{'name':'add','arguments':{}}),0)

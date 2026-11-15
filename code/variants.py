@@ -27,3 +27,18 @@ def load_variant(name,run,shuffled=None):
     elif name=='noop':
         model=get_peft_model(model,LoraConfig(r=16,lora_alpha=32,target_modules=['q_proj','v_proj'],bias='none',task_type='CAUSAL_LM'))
     return model.eval(),tok
+
+
+def artifact_fingerprint(name,run,shuffled=None):
+    import hashlib,json
+    from common import inventory
+    if name not in VARIANTS:raise ValueError('Unknown variant')
+    if name in ['base_fp16','base_nf4','noop']:
+        identity=[{'base_revision':REVISION}]
+    else:
+        folder={'merged_nf4':'quantized','merged_fp16':'merged','shuffled_label_adapter':'shuffled_label_adapter'}.get(name,'adapter')
+        path=Path(shuffled) if name=='shuffled_label_adapter' and shuffled else Path(run)/folder
+        if not path.is_dir():raise FileNotFoundError(path)
+        identity=inventory(path)
+        if not identity:raise ValueError('Empty artifact directory')
+    return hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()

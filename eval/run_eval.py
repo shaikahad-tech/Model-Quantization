@@ -1,28 +1,38 @@
 """Record every prompt, generation, stop reason and recomputable score."""
 import argparse
 import gc
-import hashlib
 import json
 import sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'code'))
-from common import atomic_json,inventory,utc
-from variants import VARIANTS,load_variant
+from common import utc
+from variants import VARIANTS,load_variant,artifact_fingerprint
 from eval.scorers import score
 from eval.suites import load_suite
 
 
-def run_eval(run,variant,suite_dir,suite,out,shuffled=None):
+def validate_completed(path,items,meta,variant,suite,fingerprint):
+    rows=[json.loads(line) for line in path.read_text().splitlines() if line]
+    if len(rows)!=len(items):raise ValueError('Incomplete saved evaluation')
+    for row,item in zip(rows,items):
+        if (row['item']!=item or row['id']!=item['id'] or row['prompt']!=item['prompt']
+            or row['variant']!=variant or row['suite']!=suite
+            or row['suite_sha256']!=meta['content_sha256'] or row['artifact_fingerprint']!=fingerprint
+            or row['score']!=score(row['generation'],item)):
+            raise ValueError('Saved evaluation identity or score changed')
+
+
+def run_eval(run,variant,suite_dir,suite,out,shuffled=None,resume=False):
     import torch
     items,meta=load_suite(suite_dir,suite)
-    if out.exists():raise FileExistsError('Refusing to overwrite evaluation '+str(out))
+    fingerprint=artifact_fingerprint(variant,run,shuffled)
+    if out.exists():
+        if not resume:raise FileExistsError('Refusing to overwrite evaluation '+str(out))
+        validate_completed(out,items,meta,variant,suite,fingerprint)
+        return
     out.parent.mkdir(parents=True,exist_ok=True);partial=out.with_suffix('.partial.jsonl')
     if partial.exists():partial.rename(partial.with_name(partial.name+'.failed.'+str(__import__('time').time_ns())))
     model,tok=load_variant(variant,run,shuffled);outputs=0
-    artifact=run/('quantized' if variant=='merged_nf4' else 'merged' if variant=='merged_fp16' else 'adapter')
-    identity=inventory(artifact) if variant not in ['base_fp16','base_nf4','noop'] else [{'base_revision':'989aa7980e4cf806f80c7fef2b1adb7bc71aa306'}]
-    if variant=='shuffled_label_adapter':identity=inventory(shuffled or run/'shuffled_label_adapter')
-    fingerprint=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
     with partial.open('w') as f,torch.inference_mode():
         for item in items:
             ids=tok.apply_chat_template([{'role':'user','content':item['prompt']}],tokenize=True,return_dict=False,add_generation_prompt=True,return_tensors='pt').to(model.device)
@@ -37,17 +47,16 @@ def run_eval(run,variant,suite_dir,suite,out,shuffled=None):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--suite-dir',type=Path,required=True);p.add_argument('--variant',choices=VARIANTS);p.add_argument('--suite');p.add_argument('--out',type=Path);p.add_argument('--all-variants',action='store_true');p.add_argument('--shuffled-adapter',type=Path);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--suite-dir',type=Path,required=True);p.add_argument('--variant',choices=VARIANTS);p.add_argument('--suite');p.add_argument('--out',type=Path);p.add_argument('--all-variants',action='store_true');p.add_argument('--shuffled-adapter',type=Path);p.add_argument('--resume',action='store_true');a=p.parse_args()
     if a.all_variants:
         manifest=json.loads((a.suite_dir/'manifest.json').read_text())
         for name in VARIANTS:
             for suite in manifest['suites']:
                 out=a.run_dir/'eval'/name/(suite+'.jsonl')
-                # Completed outputs are never silently trusted on a resume; caller must validate the eval stage manifest.
-                run_eval(a.run_dir,name,a.suite_dir,suite,out,a.shuffled_adapter)
+                run_eval(a.run_dir,name,a.suite_dir,suite,out,a.shuffled_adapter,a.resume)
     else:
         if not a.variant or not a.suite or not a.out:p.error('--variant, --suite and --out are required')
-        run_eval(a.run_dir,a.variant,a.suite_dir,a.suite,a.out,a.shuffled_adapter)
+        run_eval(a.run_dir,a.variant,a.suite_dir,a.suite,a.out,a.shuffled_adapter,a.resume)
 
 
 if __name__=='__main__':main()
