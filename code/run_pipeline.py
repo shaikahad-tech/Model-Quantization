@@ -88,7 +88,10 @@ def main():
                 if c['name']=='v2':
                     selected=json.loads((ROOT/'configs/task_selection.json').read_text())
                     if selected.get('status')!='SELECTED':raise RuntimeError('Task selection not completed')
-                    raise RuntimeError('v2 primary-dev/safety-dev checkpoint selection and sweep orchestration are not validated; stop after replica')
+                    replica=Path(c['replica_run_dir'])
+                    if not valid_stage(replica,'replicate'):raise RuntimeError('A hash-verified passing replica is required before v2')
+                    from budget import calculate
+                    if calculate(c)['batch_fallback_recommended']:raise RuntimeError('Budget exceeds 13 GB: record a 2x8 config and a fresh budget before training')
                 cmd=[sys.executable,'-u','code/rerun.py',stage,'--run-dir',str(run),'--config',str(a.config)]
                 if a.resume:cmd+=['--resume']
                 if a.seed is not None:cmd+=['--seed',str(a.seed)]

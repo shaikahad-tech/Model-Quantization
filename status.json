@@ -57,6 +57,10 @@
     "Original raw-log delivery": {
       "status": "UNVERIFIED",
       "evidence": "Private ZIP prepared; delivery/receipt not established"
+    },
+    "v2 checkpoint selection": {
+      "status": "CPU TESTED; GPU NOT RUN",
+      "evidence": "code/dev_selection.py and code/test_dev_selection.py; primary score subject to harmful/benign safety checks"
     }
   }
 }

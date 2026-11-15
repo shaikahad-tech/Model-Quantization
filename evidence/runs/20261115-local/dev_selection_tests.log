@@ -1,0 +1,37 @@
+test_context_separator (test_data.DataChecks.test_context_separator) ... ok
+test_mask_zero_target (test_data.DataChecks.test_mask_zero_target) ... ok
+test_near_duplicates (test_data.DataChecks.test_near_duplicates) ... ok
+test_original_dataset (test_data.DataChecks.test_original_dataset) ... ok
+test_prompt_mask_and_eos (test_data.DataChecks.test_prompt_mask_and_eos) ... ok
+test_real_tokenizer (test_data.DataChecks.test_real_tokenizer) ... ok
+test_reject_changed_dataset (test_data.DataChecks.test_reject_changed_dataset) ... ok
+test_reject_missing_eos (test_data.DataChecks.test_reject_missing_eos) ... ok
+test_reject_prefix_mismatch (test_data.DataChecks.test_reject_prefix_mismatch) ... ok
+test_reject_truncation (test_data.DataChecks.test_reject_truncation) ... ok
+test_return_dict_false_contract (test_data.DataChecks.test_return_dict_false_contract) ... ok
+test_unicode_jsonl (test_data.DataChecks.test_unicode_jsonl) ... ok
+test_safety_overrides_primary_gain (test_dev_selection.SelectionTests.test_safety_overrides_primary_gain) ... ok
+test_unpaired_rejected (test_dev_selection.SelectionTests.test_unpaired_rejected) ... ok
+test_contains_boundaries (test_scorers.ScorerChecks.test_contains_boundaries) ... ok
+test_json (test_scorers.ScorerChecks.test_json) ... ok
+test_number (test_scorers.ScorerChecks.test_number) ... ok
+test_refusal (test_scorers.ScorerChecks.test_refusal) ... ok
+test_tool (test_scorers.ScorerChecks.test_tool) ... ok
+test_mcnemar (test_stats.StatsChecks.test_mcnemar) ... ok
+test_noninferiority (test_stats.StatsChecks.test_noninferiority) ... ok
+test_paired_and_reproducible (test_stats.StatsChecks.test_paired_and_reproducible) ... ok
+test_power (test_stats.StatsChecks.test_power) ... ok
+test_wilson (test_stats.StatsChecks.test_wilson) ... ok
+test_merge_wrong_scale (test_verify_cpu.VerifierChecks.test_merge_wrong_scale) ... Sliding Window Attention is enabled but not implemented for `sdpa`; unexpected results may be encountered.
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+ok
+test_noop_and_random_key_mapping (test_verify_cpu.VerifierChecks.test_noop_and_random_key_mapping) ... ok
+test_resume_hash (test_verify_cpu.VerifierChecks.test_resume_hash) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 2.105s
+
+OK

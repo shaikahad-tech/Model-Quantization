@@ -99,13 +99,17 @@ def execute(args):
             learning_rate=c['lr'],lr_scheduler_type=c['scheduler'],warmup_ratio=c['warmup_ratio'],
             fp16=True,gradient_checkpointing=True,logging_steps=10,eval_strategy='steps',eval_steps=c['checkpoint_steps'],
             save_strategy='steps',save_steps=c['checkpoint_steps'],save_total_limit=3,load_best_model_at_end=True,
-            metric_for_best_model='eval_loss',report_to='none',seed=c['seed'],data_seed=c['seed'],optim=c['optimizer'],weight_decay=0.0)
+            metric_for_best_model='eval_selection_score' if c['name']=='v2' else 'eval_loss',greater_is_better=c['name']=='v2',report_to='none',seed=c['seed'],data_seed=c['seed'],optim=c['optimizer'],weight_decay=0.0)
         class PersistCheckpoint(TrainerCallback):
             def on_save(self,args,state,control,**kwargs):
                 checkpoint=f'checkpoints/checkpoint-{state.global_step}'
                 atomic_json(run/checkpoint/'CHECKPOINT_HASHES.json',[r for r in inventory(run/checkpoint) if r['path']!='CHECKPOINT_HASHES.json'])
                 save(run)
-        trainer=Trainer(model=model,args=options,train_dataset=Dataset.from_list(features),eval_dataset=Dataset.from_list(val),
+        trainer_type=Trainer
+        if c['name']=='v2':
+            from dev_selection import trainer_class
+            trainer_type=trainer_class(Trainer,tok,ROOT/c['dev_suite_dir'],run)
+        trainer=trainer_type(model=model,args=options,train_dataset=Dataset.from_list(features),eval_dataset=Dataset.from_list(val),
             data_collator=DataCollatorForSeq2Seq(tok,padding=True,label_pad_token_id=-100,pad_to_multiple_of=8),callbacks=[PersistCheckpoint()])
         checkpoint=get_last_checkpoint(str(run/'checkpoints')) if args.resume and (run/'checkpoints').exists() else None
         if checkpoint:
@@ -116,6 +120,7 @@ def execute(args):
             baseline=trainer.evaluate();baseline['same_mask']=same_mask_validation(model,val);atomic_json(run/'eval_baseline.json',baseline);save(run)
         trainer.train(resume_from_checkpoint=checkpoint)
         final=trainer.evaluate();final['same_mask']=same_mask_validation(model,val);atomic_json(run/'eval_final.json',final)
+        if c['name']=='v2' and not final['eval_safety_eligible']:raise ValueError('No safety-eligible final checkpoint; results retained')
         trainer.save_model(str(paths['adapter']));tok.save_pretrained(paths['adapter'])
         outputs=[run/n for n in ['mask_audit.json','preflight.json','eval_baseline.json','eval_final.json']]+list(paths['adapter'].rglob('*'))
     elif stage=='merge':

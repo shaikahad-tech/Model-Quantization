@@ -42,5 +42,7 @@
   "cuda_allowance_gb": [
     0.7,
     1.4
-  ]
+  ],
+  "dev_suite_dir": "data/v2/dev_suites",
+  "replica_run_dir": "runs/replica-20261115"
 }
