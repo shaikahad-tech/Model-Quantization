@@ -1,0 +1,11 @@
+{
+  "recorded_utc": "2026-11-15T16:22:33.979582+00:00",
+  "cli_version": "0.8.0",
+  "authentication": "completed",
+  "requested_gpu": "T4",
+  "create_output": "Session READY.",
+  "execute_output": "Session 'model-quantization-replica' not found.",
+  "followup_sessions": "No active sessions found on server.",
+  "gpu_training_executed": false,
+  "note": "Summary of observed CLI responses; no credentials recorded."
+}
