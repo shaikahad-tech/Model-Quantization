@@ -1,0 +1,7 @@
+# AI assistance and reflection
+
+ChatGPT helped select the experiment, wrote notebook cells and verification code, proposed memory arithmetic, operated the authorized Colab session, and assembled documentation. Accepted suggestions included the small Qwen model, English instruction data, LoRA and the three-artifact comparison. Tool-based checks inspected actual errors, sizes, saved configs, hashes, GPU samples and smoke-test outputs. The incompatible version pin and token-length calculation were corrected after observed failures. These are AI-assisted actions; the record does not establish that the author independently rewrote or reviewed every line or answer.
+
+For this revision, ChatGPT compared the gate command with its log/JSON, recalculated sampled GPU maxima and hashes, identified the newline mismatch, and removed overclaims about gate scope, learning and a documented pre-training budget. New code was checked locally but has not run on CUDA. Missing results and email confirmations were not invented.
+
+**Surprise and remaining concern.** A successful export and lower small-slice NLL coexisted with a large safety drop in a different inference configuration. More surprising was how easily a gate result could be described as applying to a file it never loaded. Artifact identity, numerics and per-case evidence matter as much as a completed run. Remaining concerns are the response mask, missing negative controls, lost weights, absent safety diagnoses, unmeasured host peaks and treating a polished report as experimental proof.

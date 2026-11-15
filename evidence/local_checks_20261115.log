@@ -1,0 +1,30 @@
+2026-11-15T10:15:39.912207+00:00 COMMAND ['python3', '-m', 'unittest', 'discover', '-s', 'code', '-p', 'test_*.py', '-v']
+2026-11-15T10:15:39.961700+00:00 test_context_separator (test_data.DataChecks) ... ok
+2026-11-15T10:15:39.961714+00:00 test_original_dataset (test_data.DataChecks) ... ok
+2026-11-15T10:15:39.961715+00:00 test_prompt_mask_and_eos (test_data.DataChecks) ... ok
+2026-11-15T10:15:39.961716+00:00 test_reject_changed_dataset (test_data.DataChecks) ... ok
+2026-11-15T10:15:39.961717+00:00 test_reject_missing_eos (test_data.DataChecks) ... ok
+2026-11-15T10:15:39.961717+00:00 test_reject_prefix_mismatch (test_data.DataChecks) ... ok
+2026-11-15T10:15:39.961718+00:00 test_reject_truncation (test_data.DataChecks) ... ok
+2026-11-15T10:15:39.961719+00:00 
+2026-11-15T10:15:39.961720+00:00 ----------------------------------------------------------------------
+2026-11-15T10:15:39.961721+00:00 Ran 7 tests in 0.010s
+2026-11-15T10:15:39.961721+00:00 
+2026-11-15T10:15:39.961722+00:00 OK
+2026-11-15T10:15:39.961723+00:00 EXIT 0
+2026-11-15T10:15:39.961725+00:00 COMMAND ['bash', '-n', 'reproduce.sh']
+2026-11-15T10:15:39.964815+00:00 EXIT 0
+2026-11-15T10:15:39.964829+00:00 COMMAND ['python3', 'code/rerun.py', '--help']
+2026-11-15T10:15:39.992238+00:00 usage: rerun.py [-h] --run-dir RUN_DIR {train,merge,quantize,verify}
+2026-11-15T10:15:39.992253+00:00 
+2026-11-15T10:15:39.992254+00:00 New HF workflow. GPU execution pending; never overwrites historical evidence.
+2026-11-15T10:15:39.992255+00:00 
+2026-11-15T10:15:39.992256+00:00 positional arguments:
+2026-11-15T10:15:39.992257+00:00   {train,merge,quantize,verify}
+2026-11-15T10:15:39.992257+00:00 
+2026-11-15T10:15:39.992258+00:00 optional arguments:
+2026-11-15T10:15:39.992259+00:00   -h, --help            show this help message and exit
+2026-11-15T10:15:39.992260+00:00   --run-dir RUN_DIR
+2026-11-15T10:15:39.992260+00:00 EXIT 0
+All Python files parsed; no CUDA execution performed.
+PDF has 2 pages; both pages rendered and visually inspected.

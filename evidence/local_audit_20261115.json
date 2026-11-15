@@ -1,0 +1,41 @@
+{
+  "audit_utc": "2026-11-15T10:11:32.749655+00:00",
+  "scope": "Local file consistency only; no GPU execution",
+  "dataset_rows": [
+    1400,
+    100
+  ],
+  "exact_duplicates_or_overlap": 0,
+  "dataset_hashes_match": true,
+  "gpu_sample_peaks": {
+    "train": {
+      "samples": 235,
+      "peak_MiB": 5395,
+      "peak_decimal_GB": 5.65706752
+    },
+    "merge": {
+      "samples": 111,
+      "peak_MiB": 115,
+      "peak_decimal_GB": 0.12058624
+    },
+    "quantize": {
+      "samples": 185,
+      "peak_MiB": 1257,
+      "peak_decimal_GB": 1.318060032
+    }
+  },
+  "gate_numerics": "bfloat16",
+  "gate_input": "base plus adapter",
+  "nll_per_token": {
+    "base": 2.5134674371332255,
+    "merged": 2.352026392646639,
+    "4bit": 2.378492740885695
+  },
+  "missing": [
+    "NF4 gate",
+    "100-row GPU results",
+    "safety cases",
+    "shuffled-label control",
+    "model weights"
+  ]
+}

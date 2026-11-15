@@ -1,34 +1,63 @@
-# Trainer LoRA evidence run — 11 November 2026
+# Model quantization evidence audit
 
-**Verdict: DON'T SHIP.** The artifact is real and the 4-bit export loads, but the independent evaluation is too small, Trainer's gate exited **2 (DON'T SHIP)** on both runs: the six-item task score tied at 1.00 while mini safety fell 1.00→0.45, common sense 0.825→0.750, and tool calling 0.700→0.625. Before release, fix those regressions, demonstrate a strict task win on a non-saturated, representative holdout, audit response masking, and review data/license suitability.
+Historical run: 11 November 2026. Revised: 15 November 2026.
 
-## Materials and run
+**DON'T SHIP.** The saved gate evaluated the **base plus active adapter in bfloat16**, not the merged FP16 or NF4 export. It exited 2 (`failed_rule=task_win`): six contains-match tasks tied 6/6, while aggregate safety fell 1.00→0.45, common sense 0.825→0.750 and tool calling 0.700→0.625. All eight mini-suite aggregates were saved; per-case outputs and denominators were not. Neither exported artifact received this gate. Missing 4-bit validation and the adapter regression block release.
 
-I chose [Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) for its 1.5B scale, open weights, and explicit chat template, and 1,500 English examples sampled deterministically from [Databricks Dolly 15k](https://huggingface.co/datasets/databricks/databricks-dolly-15k), because I can inspect English outputs. After template-length filtering, 1,400 rows went to Trainer (which split off 10% validation) and 100 were held out separately. Train/held-out SHA-256: `f2851c4d747445d727e86fd03483bfce30250b0843db25b38f8a86d3a4aeaab3` / `87fb5abbb936b05909856c6f22ec56fdc84d106b0d737aee3e0d49b60bcf1002`. Trainer 0.77.2, T4 15 GiB, LoRA r=16/alpha=32 on q_proj and v_proj, 4-bit training, length 512, one epoch, 315 steps. The fp16 merge is 3,087,466,808 bytes; the NF4 double-quantized export is 1,143,327,349 bytes.
+## Materials and provenance
 
-## Memory budget, calculated before training and checked afterward
+Qwen2.5-1.5B-Instruct (revision `989aa7980e4cf806f80c7fef2b1adb7bc71aa306`) fits a T4 and has an inspectable template. Databricks Dolly 15k provides English instructions that can be read directly; its dataset card specifies CC BY-SA 3.0. A deterministic seed (20261111) selected 1,500 rows: 1,400 input to training, with 10% validation (1,260/140), plus 100 separate holdouts. Direct English inspection does not mean all outputs were manually scored. Exact file hashes and the newly retrieved upstream template hash are in README; the historical tokenizer hash was not saved.
 
-Qwen config: 28 layers, hidden 1536, 12 attention heads, 2 KV heads, vocab 151,936. The q/v LoRA has `28×16×[(1536+1536)+(1536+256)] = 2,179,072` trainable parameters. Its fp16 weights and gradients use ~8.7 MB, Adam moments ~17.4 MB, and a possible fp32 master copy ~8.7 MB: ~35 MB total. The quantized base is ~1.14 GB on disk (GPU storage and metadata differ); a 512-token fp16 logits tensor is `512×151,936×2 = 156 MB`, or ~311 MB if upcast for loss. Allow ~2–3 GB for saved activations/backward, dequantization workspace, and 0.7–1.4 GB for CUDA/allocator overhead: **~4–6 GB training VRAM**. The largest 2-second `nvidia-smi` sample was **5,395 MiB** (235 samples), inside that band. Sampling can miss a shorter peak, and `nvidia-smi` includes context/reserved memory rather than the tensor arithmetic alone.
+The historical CLI (public alias `trainer`, version 0.77.2) automated training/export/gating; Transformers was 5.22.1. Names are redacted at the owner's request; aliases are not runnable commands. LoRA r16/alpha32 targeted q_proj/v_proj; 4-bit training, length 512, one epoch, 315 steps. Retry loss fell 1.7595→1.6234. FP16 merge: 3,087,466,808 bytes; NF4 double-quant export: 1,143,327,349 bytes. Logs document exports and reloads; weights were lost after runtime reset. A new public HF rerun workflow exists but has not run on GPU.
 
-For export, two fp16 copies of 1.54B parameters are ~6.2 GB in host memory, plus temporary merge/write buffers; I budgeted ~7–10 GB host RAM, with ~0–1 GB GPU for CPU-oriented merge. Observed merge GPU sample peak was **115 MiB** (111 samples); the UI later showed 6.8/12.67 GB host RAM, which is a snapshot, not a peak. Quantization budget: ~3.1 GB fp16 source + ~1.14 GB packed destination + ~1–3 GB temporary host buffers, or ~5–7 GB host RAM; observed GPU sample peak **1,257 MiB** (185 samples). The low GPU figures reflect CPU export paths and do not prove low host-memory peaks. Retry raw samples are attached; polling can miss shorter peaks.
+## Memory: retrospective estimate versus sampled use
 
-## Did it train?
+**No timestamped pre-training budget survives.** These reconstructed estimates do not satisfy that timing requirement. GB is decimal. Model: ~1.544B parameters, 28 layers, h1536, 12 heads, 2 KV heads, vocabulary151936. Batch1, sequence512. Frozen base weights have no optimizer/gradient states.
 
-Falling loss alone could mean prompt/answer leakage, wrong masking, a frozen or unused adapter, or export of the wrong checkpoint. The saved `verify_artifacts.py` ran successfully again (UTC 08:52:06, exit 0): all **56/56 LoRA B tensors nonzero**, layer-0 q_proj base→merged relative L2 **0.006277**, no adapter file in merged, and all three artifacts loaded. On eight separate held-out rows (457 answer tokens), reference NLL/token was **2.5135 base → 2.3520 merged → 2.3785 NF4**. Two greedy prompts were generated for each. This proves a nonzero merged change, some held-out likelihood gain, and no large quantization loss on this slice. It does **not** prove instruction quality, correct training labels, absence of memorization, safety, no forgetting, or behavior outside those eight rows and two prompts.
+| Component | Calculation / estimate |
+|---|---|
+| Base | FP16: 1.544B×2=3.088 GB; ideal 4-bit: ×0.5=0.772 GB; actual file 1.143 GB is only a storage proxy |
+| LoRA | A=28×16×[(1536+1536)+(1536+256)]=2,179,072; FP16 weights+grads=A×4=0.0087 GB |
+| Optimizer | FP32 moments A×8=0.0174 GB; possible master A×4=0.0087 GB |
+| Logits | 512×151936×2=0.156 GB; FP32 loss copy 0.311 GB; may overlap |
+| Activations | Hidden L×S×h×2=0.044 GB; dense attention L×12×S²×2=0.176 GB; other saved tensors/workspace allowance brings estimate to 2–3 GB |
+| Training total | CUDA/allocator allowance 0.7–1.4 GB; total ~4–6 GB; observed 5395 MiB=5.657 GB (235 samples, 2 s) |
+| Merge peak | Two FP16 copies 6.176 GB + buffers ≈7–10 GB host; GPU 0–1 GB allowance, observed115 MiB=0.121 GB (111 samples, 1 s) |
+| Quantize peak | 3.088 source+1.143 packed+1–3 buffers≈5.2–7.2 GB host; GPU ~1–2 GB allowance, observed1257 MiB=1.318 GB (185 samples, 1 s) |
 
-## Silent failure audit
+Activation formulas anchor shapes, not actual simultaneous allocations. Checkpointing, FFN intermediates, dtype upcasts and kernels affect memory. Training is within the broad envelope; CUDA context/reserved memory explain part of the gap from tensor bytes. Low export GPU use reflects CPU paths, not low host peaks. Host peaks were not measured; a 6.8 GB UI snapshot is insufficient. Polling misses short spikes. Raw samples are in `evidence/nvidia_smi_*.txt`; no independently verified throughput is claimed.
 
-| Stage | Failure and observed check | Trainer check |
-|---|---|---|
-| Data | Original long row lost its answer at 512 tokens; first training failed at row 4. Re-filtered by actual rendered token count; hashes and separate holdout recorded. | Sampled data doctor exited 0 and missed that row; training stopped. |
-| Tokenizer/template | Qwen template lacks `{% generation %}`; doctor warned `generation_markers`. A first filter incorrectly used `len(BatchEncoding)` (2 keys), then corrected to `len(input_ids)`. | Doctor warned, did not block; plan/doctor config checks passed. |
-| Training | Loss could improve with a no-op adapter or wrong mask. Nonzero B tensors, merged delta, and held-out NLL check activity; no full label-mask audit. | Training rejects a row with zero supervised target; [Trainer ship]([vendor-docs-redacted]) checks all-zero LoRA B, but cannot prove correct labels or broad behavior. |
-| Merge | `--low-memory` rejected a cached symlink; standard merge then hit torchao 0.10 incompatibility. Upgraded torchao >0.16; third merge exited 0. Compared target weights and checked merged file. | Merge caught both explicit failures; a wrong but nonzero adapter would need external provenance checks. |
-| Quantization | NF4 file exists and loads, and the retry export log is attached. The first VM had an interrupted duplicate export. NLL delta vs merged is +0.0265/token. | Export completed; no claim of broad quantization validation. |
-| Inference/gate | Same tokenizer/template and greedy settings across three artifacts. The six-item Trainer ship gate used bf16 live evaluation, exited 2 again, and `ship_verdict.json` records failed_rule `task_win`. It also flags mini safety, common sense, and tool-call regressions. | Gate rejected; a six-item smoke set is too small and saturated to justify release. |
+<!-- PAGEBREAK -->
 
-The notebook keeps failed cells and their outputs. The first install had an unsatisfiable `transformers<5` pin; correcting it yielded Trainer 0.77.2 / Transformers 5.22.1. First-VM raw files were lost, but the retry’s timestamped training/export/verification logs and raw GPU samples are attached. Subprocess output can buffer before Python timestamps it; timestamps establish capture order, not exact kernel timing.
+## Verification: what the output proves and misses
 
-**Surprise and concern.** The strongest evidence of learning came from comparing weights and held-out log likelihood, not the healthy loss curve. The surprising operational failure was a finished export followed by a disconnected runtime before raw evidence could be downloaded; the retry captured it. I still worry about the template's response mask, Dolly's open-ended and licensed content, and an unmeasured general-capability regression; those must be checked before users see this model.
+A falling loss can reflect easier batches, leakage or incorrect labels; it does not establish an active adapter or correct exported checkpoint. Historical `code/verify_artifacts.py` exited0 at08:52:06 UTC. Saved output:
 
-**AI use.** AI selected a small reproducible experiment, wrote the notebook and verification code, and proposed memory arithmetic. I checked the actual Colab errors, corrected the token-length bug, inspected the generated artifact sizes/config, ran the independent comparison, and preserved failed outputs. I rejected the initial claim that an empty local workspace meant the experiment could not run, and used the signed-in Chrome Colab T4 instead.
+| Historical smoke check | Result |
+|---|---|
+| Adapter B tensors | 56/56 nonzero |
+| Layer0 q_proj relative weight delta | 0.0062767863273620605 |
+| Base / merged / NF4 NLL per target token | 2.5134674371 / 2.3520263926 / 2.3784927409 |
+| Denominator | Eight heldout rows; 457 target tokens per artifact |
+| Other checks | No adapter file in merged; two greedy answers each; structural_pass=true, quantized_close_nll=true |
+
+This establishes a sampled nonzero change and lower NLL on that slice, not meaningful learning. Random changes/wrong adapters can pass. No negative controls, all-module merge algebra, active-adapter equivalence, safety, contamination or generalization proof exists. The original evaluator uses one newline for context; the data filter uses two. Actual training-mask fidelity remains unknown. The quantized handwashing answer produced five steps despite a request for three and was truncated. Historical logs and JSON are retained unchanged apart from declared name redaction.
+
+New code adds a 100-row comparison, no-op/randomized-B controls, 56 target merge residuals, fixed-prompt logits, module/dtype census and per-case task output. **No GPU results exist for it.** Shuffled-label training and per-case safety remain absent; new source and CPU tests are not evidence of passed model checks.
+
+## Silent failures and built-in coverage
+
+| Stage | Check / result / built-in coverage |
+|---|---|
+| Data | Sampled doctor passed; training later rejected a zero-target row. Token-length filter counted mapping keys, then was corrected to input_ids. Exact overlap checks do not detect semantic leakage. |
+| Template/labels | Doctor warned about missing generation markers without blocking. EOS/pad and all-row actual training loss masks were not audited. Formatting mismatch discovered later. |
+| Training | Nonzero B and one weight delta detect some no-op failures, not wrong/nonmeaningful updates. Built-in adversarial coverage was not tested. |
+| Merge | Single sampled delta cannot establish alpha/r scaling or base identity. Symlink and dependency failures raised exceptions and were preserved; successful retry is not equivalence proof. |
+| Quantization | Config says NF4/double-quant/FP16; saved artifact loaded. Historical layer-conversion census missing; +0.02647 NLL on eight rows is insufficient. |
+| Inference/gate | Base tokenizer reused, saved-tokenizer equality untested. Adapter bf16 gate rejected task_win and flagged regressions; no gate on saved NF4. Final preflight coverage unknown. |
+
+The full matrix and evidence links are in `docs/silent-failures.md`. Failed install/train/merge results remain. Retry timestamped text is public as redacted copies, not raw logs; original private logs exist locally. Email delivery is unverified. GPU samples are untouched. Text timestamps may lag buffered output. The historical notebook preserves first-runtime output and retry provenance; it is not a clean runnable notebook.
+
+**Before release:** preserve durable weights/hashes; run the saved NF4 gate with verified numerics; compare safety cases across base/adapter/merged/NF4 and fix regressions without hiding failures; run 100-row evaluation plus shuffled-label/control comparisons; audit full masks and final dependencies; record a pre-run budget and host/GPU peaks; execute the replacement workflow and deliver original evidence. Then reconsider DON'T SHIP.
+
+**AI disclosure/reflection:** ChatGPT proposed the setup, wrote code, operated Colab and assembled evidence. Actual errors/hashes/configs/outputs drove corrections to the dependency pin and token-length bug. No independent human rewrite or full manual scoring is claimed. This revision checked gate scope, peaks and hashes locally; CUDA execution remains pending. The surprise was attributing a gate to an artifact it never loaded. The concerns are missing safety cases, masks, controls, weights and host peaks: a polished report cannot replace them.
