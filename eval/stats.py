@@ -10,7 +10,7 @@ def wilson_ci(k, n, alpha=0.05):
     z=NormalDist().inv_cdf(1-alpha/2);p=k/n;den=1+z*z/n
     center=(p+z*z/(2*n))/den
     radius=z*math.sqrt(p*(1-p)/n+z*z/(4*n*n))/den
-    return max(0.,center-radius),min(1.,center+radius)
+    return (0. if k==0 else max(0.,center-radius)),(1. if k==n else min(1.,center+radius))
 
 
 def paired_bootstrap_diff(a,b,n_boot=10000,seed=20261111,alpha=0.05):

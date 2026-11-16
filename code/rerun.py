@@ -162,6 +162,10 @@ def main():
         files=execute(a);torch.cuda.synchronize()
         metrics={'max_memory_allocated':torch.cuda.max_memory_allocated(),'max_memory_reserved':torch.cuda.max_memory_reserved(),
                  'wall_seconds':time.monotonic()-start,'host_ru_maxrss_bytes':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024),'config_sha256':sha256(a.config)}
+        if a.stage=='verify':
+            artifacts=json.loads((run/'verification_extended.json').read_text())['artifacts'].values()
+            for key in ['max_memory_allocated','max_memory_reserved']:
+                metrics[key]=max([metrics[key]]+[item[key] for item in artifacts])
         complete_stage(run,a.stage,files,metrics);save(run)
     except Exception as error:
         atomic_json(run/f'failure_{a.stage}_{time.time_ns()}.json',{'utc':utc(),'stage':a.stage,'error':str(error),'wall_seconds':time.monotonic()-start})

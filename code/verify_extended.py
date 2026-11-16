@@ -78,7 +78,7 @@ def verify(run,tok,shuffled=None):
         artifact_path=run/('quantized' if name=='merged_nf4' else 'merged' if name=='merged_fp16' else 'adapter')
         result['artifacts'][name]={'executed_rows':len(cases),'cases':cases,'nll_per_token':sum(c['nll_sum'] for c in cases)/sum(c['target_tokens'] for c in cases),
             'historical_eight_row_nll':sum(c['nll_sum'] for c in historic)/sum(c['target_tokens'] for c in historic),'historical_eight_row_tokens':sum(c['target_tokens'] for c in historic),
-            'tasks':task_results,'dtype_census':dtype_census(model),'tokenizer_equal':True,'max_memory_allocated':torch.cuda.max_memory_allocated(),
+            'tasks':task_results,'dtype_census':dtype_census(model),'tokenizer_equal':True,'max_memory_allocated':torch.cuda.max_memory_allocated(),'max_memory_reserved':torch.cuda.max_memory_reserved(),
             'files':inventory(artifact_path) if name in ['merged_fp16','merged_nf4','fp16_adapter','nf4_adapter'] else [],'base_revision':'989aa7980e4cf806f80c7fef2b1adb7bc71aa306'}
         atomic_json(run/'verification_extended.partial.json',result);del model;gc.collect();torch.cuda.empty_cache()
     for name,artifact in result['artifacts'].items():

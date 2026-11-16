@@ -5,3 +5,4 @@ evidence/*.log -whitespace
 *.jsonl text eol=lf
 *.safetensors binary
 *.ipynb -diff
+evidence/runs/**/nvidia_initial.txt -whitespace

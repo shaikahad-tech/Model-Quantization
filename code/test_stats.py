@@ -9,6 +9,7 @@ class StatsChecks(unittest.TestCase):
     def test_wilson(self):
         lo,hi=wilson_ci(18,40);self.assertAlmostEqual(lo,.307053078,places=6);self.assertAlmostEqual(hi,.601709083,places=6)
         self.assertEqual(wilson_ci(0,40)[0],0)
+        self.assertEqual(wilson_ci(40,40)[1],1)
         with self.assertRaises(ValueError):wilson_ci(1,0)
     def test_paired_and_reproducible(self):
         a=[1,0,1,1];b=[0,0,0,0]
