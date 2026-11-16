@@ -6,3 +6,6 @@ evidence/*.log -whitespace
 *.safetensors binary
 *.ipynb -diff
 evidence/runs/**/nvidia_initial.txt -whitespace
+evidence/runs/**/logs/*.txt -whitespace
+evidence/runs/**/logs/*.log -whitespace
+evidence/runs/**/logs/*.csv -whitespace

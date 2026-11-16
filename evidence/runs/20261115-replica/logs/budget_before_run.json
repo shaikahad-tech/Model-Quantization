@@ -1,0 +1,44 @@
+{
+  "activation_workspace_allowance_bytes": [
+    2000000000.0,
+    3000000000.0
+  ],
+  "adapter_gradients_bytes": 8716288,
+  "adapter_weights_bytes": 8716288,
+  "batch_fallback_recommended": false,
+  "bias_norm_fp16_bytes": 289792,
+  "bias_norm_parameters": 144896,
+  "checkpointed_hidden_anchor_bytes": 44040192,
+  "config_sha256": "0abf2d0eb2ad8a81cd5a84976fd1833814dd451e8347b5ab2530dd7bea15fea2",
+  "created_utc": "2026-11-15T16:33:31.737021+00:00",
+  "cuda_allocator_allowance_bytes": [
+    700000000.0,
+    1400000000.0
+  ],
+  "double_quant_stats_bytes": 20791680,
+  "embedding_fp16_bytes": 466747392,
+  "embedding_parameters": 233373696,
+  "expected_fp32_nonquantized_upcast_bytes": 467037184,
+  "kind": "analytic plus uncalibrated allowances; allocator/RSS measurements must be compared after run",
+  "linear_parameters": 1310195712,
+  "logits_fp16_bytes": 155582464,
+  "logits_fp32_bytes": 311164928,
+  "merge_host_envelope_bytes": [
+    7174857216.0,
+    10174857216.0
+  ],
+  "nf4_analytic_bytes": 1142926720,
+  "nf4_floor_without_stats_bytes": 1122135040,
+  "optimizer_state_bytes": 17432576,
+  "packed_linear_bytes": 655097856,
+  "parameters": 1543714304,
+  "quantize_host_envelope_bytes": [
+    5230355328.0,
+    7230355328.0
+  ],
+  "trainable_parameters": 2179072,
+  "training_device_envelope_bytes": [
+    4655993984.0,
+    6511576448.0
+  ]
+}

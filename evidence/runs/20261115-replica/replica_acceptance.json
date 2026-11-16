@@ -1,0 +1,11 @@
+{
+  "decision": "DON'T SHIP",
+  "phase": "replica acceptance",
+  "passed": false,
+  "validation_loss": 1.5108237266540527,
+  "target": 1.33,
+  "tolerance": 0.01,
+  "absolute_gap": 0.18082372665405266,
+  "downstream": "STOPPED per preregistered replica criterion",
+  "export_status": "Drive contained merge.complete without stage_merge.json; merge completion is invalid/unverified. Quantization and verification absent."
+}

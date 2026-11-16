@@ -43,7 +43,7 @@ A falling loss can reflect easier batches, leakage or incorrect labels; it does 
 
 This establishes a sampled nonzero change and lower NLL on that slice, not meaningful learning. Random changes/wrong adapters can pass. No negative controls, all-module merge algebra, active-adapter equivalence, safety, contamination or generalization proof exists. The original evaluator uses one newline for context; the data filter uses two. Actual training-mask fidelity remains unknown. VM1/VM2 merged NLL was 2.351804/2.352026, NF4 2.378590/2.378493; greedy text differed. The handwashing example is run-dependent, not a proven quantization defect. Historical logs and JSON are retained unchanged apart from declared name redaction.
 
-New code separates base FP16/NF4, active adapters in both numerics, and saved exports; adds 100-row NLL, controls, 20-prompt logits, all-target merge checks and fail-closed G1–G9. CPU tests use a tiny Qwen model; Colab execution remains required. **No GPU results exist for it.** Shuffled-label training and per-case safety remain absent; new source and CPU tests are not evidence of passed model checks.
+New code separates base FP16/NF4, active adapters in both numerics, and saved exports; adds 100-row NLL, controls, 20-prompt logits, all-target merge checks and fail-closed G1–G9. CPU tests use a tiny Qwen model; Colab execution remains required. **Recovered replica training failed acceptance: loss 1.510824 vs 1.330 ±0.010. Downstream stopped; see docs/replica_result.md.** Shuffled-label training and per-case safety remain absent; new source and CPU tests are not evidence of passed model checks.
 
 ## Silent failures and built-in coverage
 

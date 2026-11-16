@@ -23,8 +23,8 @@
       "evidence": "evidence/runs/20261115-local/sweep_tests.log; 33 CPU tests, plus separate 12 tokenizer tests on Transformers 5.22.1"
     },
     "Replica training": {
-      "status": "RUNNING",
-      "evidence": "T4 replica-20261115; durable logs/checkpoints on approved Drive mount; final checks pending"
+      "status": "FINISHED; ACCEPTANCE FAILED",
+      "evidence": "evidence/runs/20261115-replica/replica_acceptance.json; loss 1.510824 outside 1.330 \u00b10.010; downstream STOPPED"
     },
     "Colab environment lock": {
       "status": "CAPTURED; IMPORT CHECK PASSED",
